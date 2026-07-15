@@ -3,11 +3,11 @@ use axum::{
     extract::{Path, State, rejection::JsonRejection},
     routing::{delete, get, post},
 };
-use domain::types::{MeResponse, PlayerNameInput, PlayerNamesResponse};
+use domain::types::{CareerStats, GameListItem, MeResponse, PlayerNameInput, PlayerNamesResponse};
 
 use crate::{
     auth::middleware::AuthedUser,
-    db::users,
+    db::{games, users},
     error::ApiError,
     state::{AppState, now_millis},
 };
@@ -15,8 +15,37 @@ use crate::{
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/api/me", get(me))
+        .route("/api/me/career", get(career))
+        .route("/api/me/library", get(library))
         .route("/api/me/player-names", post(add_player_name))
         .route("/api/me/player-names/{name}", delete(remove_player_name))
+}
+
+#[worker::send]
+async fn career(
+    State(state): State<AppState>,
+    user: AuthedUser,
+) -> Result<Json<CareerStats>, ApiError> {
+    let player_names = users::list_player_names(state.db(), user.id)
+        .await
+        .map_err(ApiError::internal)?;
+    Ok(Json(
+        games::career(state.db(), &player_names)
+            .await
+            .map_err(ApiError::internal)?,
+    ))
+}
+
+#[worker::send]
+async fn library(
+    State(state): State<AppState>,
+    user: AuthedUser,
+) -> Result<Json<Vec<GameListItem>>, ApiError> {
+    Ok(Json(
+        games::list_saved(state.db(), user.id)
+            .await
+            .map_err(ApiError::internal)?,
+    ))
 }
 
 #[worker::send]
