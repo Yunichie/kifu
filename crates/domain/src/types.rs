@@ -1,5 +1,85 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct User {
+    pub id: i32,
+    pub username: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct AuthCredentials {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct AuthResponse {
+    pub user: User,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct MeResponse {
+    pub user: User,
+    pub player_names: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct PlayerNameInput {
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct PlayerNamesResponse {
+    pub player_names: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct ErrorResponse {
+    pub error: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]

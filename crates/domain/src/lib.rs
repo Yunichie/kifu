@@ -26,6 +26,13 @@ pub fn export_all_bindings() -> std::result::Result<(), ts_rs::ExportError> {
     }
 
     export!(
+        types::User,
+        types::AuthCredentials,
+        types::AuthResponse,
+        types::MeResponse,
+        types::PlayerNameInput,
+        types::PlayerNamesResponse,
+        types::ErrorResponse,
         types::GameDetail,
         types::Ruleset,
         types::PlayerSummary,
