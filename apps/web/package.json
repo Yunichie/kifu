@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "bun test"
   },
   "dependencies": {
     "@kifu/api-types": "workspace:*",
@@ -16,6 +17,7 @@
     "@sveltejs/kit": "2.69.3",
     "@sveltejs/vite-plugin-svelte": "7.2.0",
     "@tailwindcss/vite": "4.3.2",
+    "@types/bun": "^1.3.14",
     "svelte": "5.56.5",
     "svelte-check": "4.7.2",
     "tailwindcss": "4.3.2",

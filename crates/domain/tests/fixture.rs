@@ -229,3 +229,14 @@ fn aggregates_career_stats_and_serializes_the_domain_contract() {
     assert_eq!(json["kyoku"][0]["events"][0]["type"], "Draw");
     assert_eq!(json["players"][1]["stats"]["wins"], 3);
 }
+
+#[test]
+fn frontend_replay_fixture_matches_the_domain_serialization() {
+    let exported: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../apps/web/tests/fixtures/2017010100gm-00a9-0000-003dbd5d.json"
+    ))
+    .expect("frontend replay fixture should be valid JSON");
+    let parsed = serde_json::to_value(fixture()).expect("GameDetail should serialize");
+
+    assert_eq!(exported, parsed);
+}
