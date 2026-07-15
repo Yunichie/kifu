@@ -1,5 +1,13 @@
 {
   "name": "kifu-api",
   "main": "build/worker/shim.mjs",
-  "compatibility_date": "2026-07-01"
+  "compatibility_date": "2026-07-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kifu",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "src/db/migrations"
+    }
+  ]
 }
