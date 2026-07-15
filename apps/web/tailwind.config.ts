@@ -26,6 +26,7 @@ export default {
         pin: 'var(--pin)',
         sou: 'var(--sou)',
         gold: 'var(--gold)',
+        'gold-ink': 'var(--gold-ink)',
         tile: {
           bg: 'var(--tile-bg)',
           text: 'var(--tile-text)'

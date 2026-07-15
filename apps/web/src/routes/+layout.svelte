@@ -1,8 +1,12 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+  import Header from '$lib/components/Header.svelte';
   import '../lib/styles/app.css';
+  import type { LayoutProps } from './$types';
 
-  let { children }: { children: Snippet } = $props();
+  let { data, children }: LayoutProps = $props();
 </script>
 
-{@render children()}
+<Header me={data.me} />
+<main class="mx-auto w-full max-w-[960px] px-5 py-8">
+  {@render children()}
+</main>

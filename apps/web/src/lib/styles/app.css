@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Slab:wght@600&display=swap");
 @config "../../../tailwind.config.ts";
 @import "tailwindcss";
 
@@ -19,9 +20,11 @@
   --pin: #4a86ab;
   --sou: #4f9668;
   --gold: #cc9f42;
+  --gold-ink: #20180a;
 
   --tile-bg: #eae2cc;
   --tile-text: #1b1912;
+  --tile-edge: rgba(0, 0, 0, 0.1);
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --motion-slow: 260ms;
@@ -40,9 +43,121 @@
     background: var(--surface-0);
     color: var(--text-primary);
     font-family: "IBM Plex Sans", -apple-system, sans-serif;
+    overflow-x: clip;
   }
 
   body {
     margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--surface-0);
+    font-size: 14px;
+    line-height: 21px;
+    overflow-x: hidden;
   }
+
+  button,
+  input,
+  select {
+    font: inherit;
+  }
+
+  :where(a, button, input, select, summary):focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-md border border-border-subtle bg-surface-1 p-5;
+  }
+
+  .button-primary,
+  .button-secondary,
+  .button-danger {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition duration-fast active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .button-primary {
+    @apply bg-gold text-gold-ink hover:brightness-110 active:brightness-95;
+  }
+
+  .button-secondary {
+    @apply border border-border bg-transparent text-text-primary hover:border-border-strong;
+  }
+
+  .button-danger {
+    @apply border border-man bg-transparent text-man hover:brightness-110;
+  }
+
+  .field {
+    @apply min-h-10 w-full rounded-md border border-border bg-surface-3 px-3 text-text-primary placeholder:text-text-tertiary focus:border-gold;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-[11px] leading-[15px] font-medium uppercase text-text-secondary;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-2 border-b-2 border-transparent px-4 text-sm text-text-secondary transition-colors duration-fast hover:text-text-primary;
+  }
+
+  .nav-link[aria-current='page'] {
+    @apply border-gold text-text-primary;
+  }
+
+  .account-row {
+    @apply block min-h-9 px-3 py-2 text-sm text-text-primary transition-colors duration-fast hover:bg-surface-3;
+  }
+
+  .status-error,
+  .status-info,
+  .status-success {
+    @apply flex items-start gap-2 rounded-md px-3 py-2.5 text-sm;
+  }
+
+  .status-error {
+    @apply bg-man/15 text-man;
+  }
+
+  .status-info {
+    @apply bg-pin/15 text-pin;
+  }
+
+  .status-success {
+    @apply bg-sou/15 text-sou;
+  }
+
+  .table-shell {
+    @apply overflow-x-auto rounded-md border border-border-subtle;
+  }
+
+  .ledger {
+    @apply w-full min-w-max border-collapse text-left;
+  }
+
+  .ledger th {
+    @apply border-b border-border-subtle px-3 py-2 text-[11px] leading-[15px] font-medium uppercase text-text-tertiary;
+  }
+
+  .ledger td {
+    @apply border-b border-border-subtle px-3 py-2.5 font-mono text-[13px] leading-[19px] font-medium text-text-primary;
+  }
+
+  .ledger tbody tr {
+    @apply transition-colors duration-fast hover:bg-surface-2;
+  }
+
+  .ledger tbody tr:last-child td {
+    @apply border-b-0;
+  }
+}
+
+.tile-shadow {
+  box-shadow: inset 0 0 0 1px var(--tile-edge), 0 2px 0 rgba(0, 0, 0, 0.22);
 }

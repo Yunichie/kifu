@@ -8,7 +8,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@kifu/api-types": "workspace:*"
+    "@kifu/api-types": "workspace:*",
+    "lucide-svelte": "^1.0.1"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "7.2.9",
