@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use worker::{D1Database, Date, Env, Error, Result};
+use worker::{D1Database, Date, Env, Error, ObjectNamespace, Result};
 
 #[derive(Clone)]
 pub struct AppState {
     db: Arc<D1Database>,
     session_secret: Arc<[u8]>,
+    tenhou_queue: ObjectNamespace,
 }
 
 impl AppState {
@@ -20,6 +21,7 @@ impl AppState {
         Ok(Self {
             db: Arc::new(env.d1("DB")?),
             session_secret: Arc::from(secret.into_bytes()),
+            tenhou_queue: env.durable_object("TENHOU_QUEUE")?,
         })
     }
 
@@ -29,6 +31,10 @@ impl AppState {
 
     pub fn session_secret(&self) -> &[u8] {
         &self.session_secret
+    }
+
+    pub fn tenhou_queue(&self) -> &ObjectNamespace {
+        &self.tenhou_queue
     }
 }
 

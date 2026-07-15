@@ -9,5 +9,19 @@
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "src/db/migrations"
     }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TENHOU_QUEUE",
+        "class_name": "TenhouQueueDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["TenhouQueueDO"]
+    }
   ]
 }

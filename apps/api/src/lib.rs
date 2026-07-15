@@ -7,6 +7,8 @@ mod error;
 mod router;
 mod routes;
 mod state;
+mod tenhou_fetch;
+mod tenhou_queue_do;
 
 #[event(fetch)]
 pub async fn fetch(
