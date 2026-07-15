@@ -1,16 +1,19 @@
-use axum::{Router, routing::get};
 use tower_service::Service;
 use worker::{Context, Env, HttpRequest, Result, event};
 
-fn router() -> Router {
-    Router::new().route("/", get(|| async { domain::SCAFFOLD_RESPONSE }))
-}
+mod auth;
+mod db;
+mod error;
+mod router;
+mod routes;
+mod state;
 
 #[event(fetch)]
 pub async fn fetch(
     request: HttpRequest,
-    _env: Env,
+    env: Env,
     _context: Context,
 ) -> Result<axum::response::Response> {
-    Ok(router().call(request).await?)
+    let state = state::AppState::from_env(&env)?;
+    Ok(router::router().with_state(state).call(request).await?)
 }
