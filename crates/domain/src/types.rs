@@ -80,6 +80,56 @@ pub struct ErrorResponse {
     pub error: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct AddGameInput {
+    pub log_id: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct GameListItem {
+    pub log_id: String,
+    pub added_at: f64,
+    pub rules: Ruleset,
+    pub players: Vec<GameListPlayer>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct GameListPlayer {
+    pub seat: u8,
+    pub name: String,
+    pub final_score: Option<i32>,
+    pub placement: Option<u8>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(
+    feature = "bindings",
+    ts(export, export_to = "../../packages/api-types/src/")
+)]
+pub struct HealthResponse {
+    pub ok: bool,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]

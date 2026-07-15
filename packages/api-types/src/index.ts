@@ -1,3 +1,4 @@
+export type { AddGameInput } from './AddGameInput';
 export type { AuthCredentials } from './AuthCredentials';
 export type { AuthResponse } from './AuthResponse';
 export type { BonusStats } from './BonusStats';
@@ -9,6 +10,9 @@ export type { DealInMatrix } from './DealInMatrix';
 export type { DrawReason } from './DrawReason';
 export type { ErrorResponse } from './ErrorResponse';
 export type { GameDetail } from './GameDetail';
+export type { GameListItem } from './GameListItem';
+export type { GameListPlayer } from './GameListPlayer';
+export type { HealthResponse } from './HealthResponse';
 export type { Kyoku } from './Kyoku';
 export type { KyokuResult } from './KyokuResult';
 export type { MeResponse } from './MeResponse';
