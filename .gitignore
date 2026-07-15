@@ -1,0 +1,9 @@
+node_modules/
+target/
+build/
+.svelte-kit/
+.wrangler/
+.env
+.env.*
+!.env.example
+/refs

@@ -1,0 +1,4 @@
+[workspace]
+members = ["apps/api", "crates/domain", "crates/codegen"]
+resolver = "2"
+

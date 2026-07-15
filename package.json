@@ -1,0 +1,20 @@
+{
+  "name": "kifu",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "bun run --cwd apps/web dev",
+    "dev:api": "wrangler dev --config apps/api/wrangler.jsonc",
+    "codegen": "cargo run -p codegen --features domain/bindings",
+    "build:api": "worker-build --release apps/api",
+    "deploy:api": "wrangler deploy --config apps/api/wrangler.jsonc",
+    "deploy:web": "bun run --cwd apps/web build && wrangler pages deploy apps/web/.svelte-kit/cloudflare",
+    "test:domain": "cargo test -p domain"
+  },
+  "devDependencies": {
+    "wrangler": "4.111.0"
+  }
+}

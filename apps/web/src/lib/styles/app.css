@@ -1,0 +1,48 @@
+@config "../../../tailwind.config.ts";
+@import "tailwindcss";
+
+:root {
+  --surface-0: #10130f;
+  --surface-1: #171d1b;
+  --surface-2: #1e2624;
+  --surface-3: #26302d;
+  --border-subtle: #212a27;
+  --border-default: #324039;
+  --border-strong: #48594f;
+
+  --text-primary: #ece7d8;
+  --text-secondary: #9aa89f;
+  --text-tertiary: #6c7871;
+  --text-disabled: #4a534e;
+
+  --man: #c2593f;
+  --pin: #4a86ab;
+  --sou: #4f9668;
+  --gold: #cc9f42;
+
+  --tile-bg: #eae2cc;
+  --tile-text: #1b1912;
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 260ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+
+@layer base {
+  html {
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font-family: "IBM Plex Sans", -apple-system, sans-serif;
+  }
+
+  body {
+    margin: 0;
+  }
+}

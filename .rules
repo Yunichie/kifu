@@ -1,0 +1,34 @@
+> **Agent Directive:** This document governs all code generation, refactoring, and architectural decisions. You must strictly adhere to these implementation rules. If a requested feature appears to violate these rules, you must restructure the approach until it complies.
+
+## Architectural Boundaries & Data Flow
+*   **The Domain Purity Rule:** The `crates/domain` crate is the single source of truth for all `mjlog` parsing, data correctness, and statistics math. You must keep this crate completely platform-agnostic. You must never import `worker`, `axum`, D1 bindings, or anything Workers-specific into the `domain` crate.
+*   **Cross-Boundary State:** The `domain` crate transmits a compact, ordered list of `TurnEvent`s, not precomputed UI snapshots. Reconstructing table states for the UI must happen exclusively in the frontend via the pure function `buildSnapshots.ts`.
+*   **Type Synchronization:** You must never hand-write a TypeScript interface that duplicates a Rust domain struct. You must use `ts-rs` to export DTOs directly from Rust. 
+*   **Wasm Feature Gating:** You must gate the `ts-rs` dependency behind a `bindings` feature in `crates/domain/Cargo.toml`. You must never allow the `apps/api` worker build to compile `ts-rs` into the `wasm32` target.
+
+## Backend
+*   **Allowed Crates:** You must use `reqwest` for outbound HTTP calls, relying on its transparent compilation to the `wasm32` platform `fetch()`. You must use `roxmltree` for XML parsing to ensure read-only, arena-based memory management without `std::io` dependencies. You must never use Tokio, `std::net`, or `sqlx`.
+*   **Database Interactions:** You must access Cloudflare D1 exclusively via the `worker::D1Database` binding. 
+*   **Concurrency Serialization:** You must route all outbound fetches to `tenhou.net` through a single, globally-named Durable Object (`tenhou_queue_do.rs`) to prevent parallel scraping. You must not attempt to queue requests using in-memory Worker state.
+*   **Router Composition:** When adding a new API route, you must export a `pub fn router() -> Router<AppState>` from a new file in `apps/api/src/routes/` and merge it into `apps/api/src/router.rs` using a single `.merge()` call. 
+*   **Controller Logic:** You must never put statistics-computation logic or SQL queries directly inside an Axum handler.
+
+## Frontend
+*   **Data Fetching:** You must route all data fetching through `lib/api/client.ts` inside `+page.server.ts` files. You must never hand-roll a new `fetch()` call pattern.
+*   **Styling Implementation:** You must write all Tailwind classes against the specific CSS variables/tokens defined in `app.css` (e.g., `bg-surface-1`, `text-man`, `border-subtle`)[cite: 2]. You must never hard-code hex values in the components[cite: 2].
+*   **Motion Rules:** You must respect `prefers-reduced-motion: reduce` by setting transition durations to `0ms`[cite: 2]. You must implement the CSS transitions exactly as mapped: `--motion-fast` (120ms), `--motion-base` (180ms), and `--motion-slow` (260ms)[cite: 2]. 
+*   **Component Reusability:** When adding new data points to the UI, you must reuse existing components (`<StatTile>`, `<ChartCard>`) rather than creating one-off wrappers.
+
+## Auth & Security Implementation
+*   **Password Hashing Limits:** You must execute password hashing directly in the Axum handler using `argon2` (or `pbkdf2` if bound to the free tier), specifically tuned to stay under Cloudflare's CPU time limits. 
+*   **Stateless Verification:** You must implement sessions using signed stateless cookies (`hmac` + `sha2`). You must never trigger a database read on an authenticated request just to verify a session.
+*   **Route Protection:** You must secure protected endpoints exclusively by adding the `AuthedUser` extractor as a handler argument (e.g., in `auth/middleware.rs`). You must never write manual session-checking logic inside the handler body.
+
+## Adding New Features (Strict Workflows)
+*   **Adding Derivable Stats:** If a new stat can be computed from existing parsed data, you must add a field to `domain/src/types.rs`, calculate it in `domain/src/stats.rs`, and run `bun run codegen`. You must never create a new database column or route for derivable stats.
+*   **Global Database Cache:** You must treat `games` and `game_players` as a global cache. When a user adds a game via `POST /api/games`, you must check D1 first and completely bypass the `tenhou.net` fetch if the `log_id` exists, linking it only in `user_saved_games`.
+
+## Testing Standards
+*   **Domain Tests:** You must write Rust `#[test]` cases in `crates/domain` that parse a real `mjlog` XML file located in `crates/domain/tests/fixtures/` and assert concrete game values.
+*   **Cross-Boundary Tests:** You must write a frontend test for `buildSnapshots.ts` that uses the exact same fixture log as the Rust domain, asserting that the frontend's final snapshot state matches the backend's computed `PlayerSummary`.
+*   **Auth Tests:** You must unit-test `password.rs` and `session.rs` in complete isolation from Axum/HTTP plumbing.

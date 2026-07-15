@@ -1,0 +1,5 @@
+{
+  "name": "kifu-api",
+  "main": "build/worker/shim.mjs",
+  "compatibility_date": "2026-07-01"
+}

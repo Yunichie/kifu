@@ -1,0 +1,4 @@
+{
+  "name": "kifu-web",
+  "pages_build_output_dir": ".svelte-kit/cloudflare"
+}
