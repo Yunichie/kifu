@@ -1,9 +1,9 @@
 import type { GameDetail } from '@kifu/api-types';
 import { error } from '@sveltejs/kit';
 import { ApiError, apiRequest } from '$lib/api/client';
-import type { PageServerLoad } from './$types';
+import type { LayoutServerLoad } from './$types';
 
-export const load: PageServerLoad = async (event) => {
+export const load: LayoutServerLoad = async (event) => {
   try {
     return {
       game: await apiRequest<GameDetail>(event, `/api/games/${encodeURIComponent(event.params.id)}`)
