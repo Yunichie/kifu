@@ -3,7 +3,7 @@ import { env } from '$env/dynamic/public';
 import type { RequestEvent } from '@sveltejs/kit';
 
 export const SESSION_COOKIE = 'kifu_session';
-const DEFAULT_API_BASE_URL = 'http://localhost:8787';
+const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8787';
 
 type ApiInit = Omit<RequestInit, 'body'> & {
   body?: unknown;
