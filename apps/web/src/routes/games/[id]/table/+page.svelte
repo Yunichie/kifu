@@ -1,5 +1,7 @@
 <script lang="ts">
-  import ReplayScrubber from '$lib/components/ReplayScrubber.svelte';
+  import Grid3X3 from 'lucide-svelte/icons/grid-3x3';
+  import Rows3 from 'lucide-svelte/icons/rows-3';
+  import PlaybackScrubber from '$lib/components/PlaybackScrubber.svelte';
   import TableBoard from '$lib/components/TableBoard.svelte';
   import { roundLabel } from '$lib/format';
   import { buildSnapshots } from '$lib/replay/buildSnapshots';
@@ -9,6 +11,7 @@
   let kyokuIndex = $state(0);
   let viewedSeat = $state(0);
   let turnIndex = $state(0);
+  let compactMode = $state(false);
   let activeSeats = $derived(data.game.players.map((player) => player.seat).toSorted((a, b) => a - b));
   let kyoku = $derived(data.game.kyoku[kyokuIndex]);
   let isLastKyoku = $derived(kyokuIndex === data.game.kyoku.length - 1);
@@ -35,11 +38,6 @@
     turnIndex = 0;
   }
 
-  function centerBoard(scroller: HTMLElement): void {
-    requestAnimationFrame(() => {
-      scroller.scrollLeft = (scroller.scrollWidth - scroller.clientWidth) / 2;
-    });
-  }
 </script>
 
 <svelte:head>
@@ -57,12 +55,12 @@
         onchange={(event) => selectKyoku(Number(event.currentTarget.value))}
       >
         {#each data.game.kyoku as hand, index (`${hand.roundIndex}-${hand.honba}-${index}`)}
-          <option value={index}>{roundLabel(hand.bakaze, hand.kyokuNumber, hand.honba)}</option>
+          <option value={index}>{String(index + 1).padStart(2, '0')} · {roundLabel(hand.bakaze, hand.kyokuNumber, hand.honba)}</option>
         {/each}
       </select>
     </div>
 
-    <div>
+    <div class="flex flex-col gap-3 sm:items-end">
       <div class="field-label">Viewed seat</div>
       <div class="max-w-full overflow-x-auto">
         <div class="flex min-w-max border-b border-border-subtle" role="tablist" aria-label="Viewed seat">
@@ -80,21 +78,37 @@
           {/each}
         </div>
       </div>
+      <div class="hidden rounded-sm border border-border-subtle p-0.5 sm:flex" role="group" aria-label="Replay layout">
+        <button
+          class={['inline-flex min-h-8 items-center gap-1.5 rounded-sm px-2.5 text-[11px] transition-colors duration-fast', !compactMode ? 'bg-surface-3 text-gold' : 'text-text-tertiary hover:text-text-primary']}
+          type="button"
+          aria-pressed={!compactMode}
+          onclick={() => compactMode = false}
+        ><Grid3X3 size={14} strokeWidth={1.75} aria-hidden="true" />Table</button>
+        <button
+          class={['inline-flex min-h-8 items-center gap-1.5 rounded-sm px-2.5 text-[11px] transition-colors duration-fast', compactMode ? 'bg-surface-3 text-gold' : 'text-text-tertiary hover:text-text-primary']}
+          type="button"
+          aria-pressed={compactMode}
+          onclick={() => compactMode = true}
+        ><Rows3 size={14} strokeWidth={1.75} aria-hidden="true" />Compact</button>
+      </div>
     </div>
   </div>
 
-  <div class="-mx-5 overflow-x-auto px-5 pb-2 sm:mx-0 sm:px-0" {@attach centerBoard}>
-    <TableBoard
-      {snapshot}
-      players={data.game.players}
-      {viewedSeat}
-      honba={kyoku.honba}
-      result={kyoku.result}
-    />
-  </div>
+  <TableBoard
+    {snapshot}
+    players={data.game.players}
+    {viewedSeat}
+    dealer={kyoku.dealer}
+    bakaze={kyoku.bakaze}
+    kyokuNumber={kyoku.kyokuNumber}
+    honba={kyoku.honba}
+    result={kyoku.result}
+    {compactMode}
+  />
 
   {#key kyokuIndex}
-    <ReplayScrubber
+    <PlaybackScrubber
       turn={turnIndex}
       maxTurn={snapshots.length - 1}
       event={snapshot.event}
