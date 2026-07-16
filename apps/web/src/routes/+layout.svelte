@@ -7,6 +7,6 @@
 </script>
 
 <Header me={data.me} />
-<main class="mx-auto w-full max-w-[960px] px-5 py-8">
+<main class="mx-auto w-full max-w-[1180px] px-5 py-8">
   {@render children()}
 </main>

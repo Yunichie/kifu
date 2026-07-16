@@ -3,16 +3,15 @@
   import { page } from '$app/state';
   import ChevronDown from 'lucide-svelte/icons/chevron-down';
   import LogIn from 'lucide-svelte/icons/log-in';
-  import Plus from 'lucide-svelte/icons/plus';
 
   let { me }: { me: MeResponse | null } = $props();
 </script>
 
-<header class="border-b border-border-subtle bg-surface-1">
-  <div class="mx-auto max-w-[960px] px-5">
+<header class="border-b border-border-subtle bg-surface-1/90">
+  <div class="mx-auto max-w-[1180px] px-5">
     <div class="flex min-h-16 items-center justify-between gap-4">
-      <a class="font-display text-[28px] leading-[34px] font-semibold text-text-primary" href="/">
-        Kifu
+      <a class="flex items-baseline gap-2 font-display text-[28px] leading-[34px] font-semibold text-text-primary" href="/">
+        Kifu <span class="text-[12px] font-medium text-gold" lang="ja">棋譜</span>
       </a>
 
       <nav class="hidden items-stretch self-stretch sm:flex" aria-label="Primary navigation">
@@ -64,7 +63,6 @@
           ? 'page'
           : undefined}
       >
-        <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
         Logs
       </a>
       <a

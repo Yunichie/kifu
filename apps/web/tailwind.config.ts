@@ -33,9 +33,9 @@ export default {
         }
       },
       fontFamily: {
-        display: ['"IBM Plex Slab"', 'serif'],
-        sans: ['"IBM Plex Sans"', '-apple-system', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace']
+        display: ['"Shippori Mincho"', '"Noto Serif JP"', 'serif'],
+        sans: ['"Noto Sans JP"', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
       },
       borderRadius: {
         sm: '6px',
