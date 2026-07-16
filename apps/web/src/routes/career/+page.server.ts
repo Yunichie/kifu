@@ -4,9 +4,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
   const { me } = await event.parent();
-  const players = await apiRequest<string[]>(event, '/api/players');
-  return {
-    players,
-    career: me ? await apiRequest<CareerStats>(event, '/api/me/career') : null
-  };
+  return me
+    ? { players: [], career: await apiRequest<CareerStats>(event, '/api/me/career') }
+    : { players: await apiRequest<string[]>(event, '/api/players'), career: null };
 };

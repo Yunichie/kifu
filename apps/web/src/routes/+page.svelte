@@ -4,7 +4,6 @@
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
-  let selectedGames = $derived(data.view === 'library' ? data.library : data.games);
 </script>
 
 <svelte:head>
@@ -63,8 +62,8 @@
     </nav>
   </div>
 
-  {#if selectedGames.length > 0}
-    <GameList games={selectedGames} removable={data.view === 'library'} />
+  {#if data.games.length > 0}
+    <GameList games={data.games} removable={data.view === 'library'} />
   {:else}
     <div class="flex min-h-40 flex-col items-center justify-center gap-3 text-center text-text-tertiary">
       <FilePlus2 class="opacity-20" size={36} strokeWidth={1.5} aria-hidden="true" />

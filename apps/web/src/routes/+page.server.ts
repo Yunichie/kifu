@@ -6,12 +6,11 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
   const { me } = await event.parent();
   const view = me && event.url.searchParams.get('view') !== 'all' ? 'library' : 'all';
-  const [games, players, library] = await Promise.all([
-    apiRequest<GameListItem[]>(event, '/api/games'),
-    apiRequest<string[]>(event, '/api/players'),
-    me ? apiRequest<GameListItem[]>(event, '/api/me/library') : Promise.resolve([])
+  const [games, players] = await Promise.all([
+    apiRequest<GameListItem[]>(event, view === 'library' ? '/api/me/library' : '/api/games'),
+    apiRequest<string[]>(event, '/api/players')
   ]);
-  return { games, players, library, view };
+  return { games, players, view };
 };
 
 export const actions = {

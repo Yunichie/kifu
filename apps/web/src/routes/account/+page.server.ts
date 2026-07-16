@@ -45,7 +45,6 @@ export const actions = {
     } catch (error) {
       if (!(error instanceof ApiError && error.status === 401)) throw error;
     }
-    event.cookies.delete('kifu_session', { path: '/' });
     redirect(303, '/');
   }
 } satisfies Actions;

@@ -2,7 +2,7 @@ import type { ErrorResponse } from '@kifu/api-types';
 import { env } from '$env/dynamic/public';
 import type { RequestEvent } from '@sveltejs/kit';
 
-const SESSION_COOKIE = 'kifu_session';
+export const SESSION_COOKIE = 'kifu_session';
 const DEFAULT_API_BASE_URL = 'http://localhost:8787';
 
 type ApiInit = Omit<RequestInit, 'body'> & {

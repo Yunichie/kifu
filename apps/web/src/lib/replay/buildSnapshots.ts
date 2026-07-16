@@ -31,7 +31,6 @@ export type SnapshotOptions = {
   endScores?: number[];
   initialDoraIndicators?: number[];
   riichiSticks?: number;
-  remainingWall?: number;
 };
 
 export function buildSnapshots(
@@ -53,7 +52,7 @@ export function buildSnapshots(
     scores: fourSeats(options.startScores ?? [], (_, seat) =>
       options.startScores?.[seat] ?? (startHands[seat]?.length ? (activeSeats === 3 ? 35_000 : 25_000) : 0)
     ),
-    remainingWall: options.remainingWall ?? Math.max(0, initialWall),
+    remainingWall: Math.max(0, initialWall),
     riichiSticks: options.riichiSticks ?? 0,
     event: null
   };

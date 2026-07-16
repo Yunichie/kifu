@@ -104,7 +104,7 @@ async fn player_names_response(
 }
 
 fn validate_player_name(name: &str) -> Result<(), ApiError> {
-    if name.is_empty() || name.chars().count() > 64 || name.chars().any(char::is_control) {
+    if !super::valid_player_name(name) {
         return Err(ApiError::bad_request(
             "player name must be 1-64 characters without control characters",
         ));

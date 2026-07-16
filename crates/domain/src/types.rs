@@ -3,10 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -15,10 +12,7 @@ pub struct User {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct AuthCredentials {
     pub username: String,
     pub password: String,
@@ -27,10 +21,7 @@ pub struct AuthCredentials {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct AuthResponse {
     pub user: User,
 }
@@ -38,10 +29,7 @@ pub struct AuthResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct MeResponse {
     pub user: User,
     pub player_names: Vec<String>,
@@ -50,10 +38,7 @@ pub struct MeResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct PlayerNameInput {
     pub name: String,
 }
@@ -61,10 +46,7 @@ pub struct PlayerNameInput {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct PlayerNamesResponse {
     pub player_names: Vec<String>,
 }
@@ -72,10 +54,7 @@ pub struct PlayerNamesResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct ErrorResponse {
     pub error: String,
 }
@@ -83,10 +62,7 @@ pub struct ErrorResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct AddGameInput {
     pub log_id: String,
 }
@@ -94,10 +70,7 @@ pub struct AddGameInput {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct GameListItem {
     pub log_id: String,
     pub added_at: f64,
@@ -108,10 +81,7 @@ pub struct GameListItem {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct GameListPlayer {
     pub seat: u8,
     pub name: String,
@@ -122,10 +92,7 @@ pub struct GameListPlayer {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct HealthResponse {
     pub ok: bool,
 }
@@ -133,10 +100,7 @@ pub struct HealthResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct GameDetail {
     pub log_id: String,
     pub rules: Ruleset,
@@ -148,10 +112,7 @@ pub struct GameDetail {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct Ruleset {
     pub raw_type: u16,
     pub lobby: String,
@@ -167,10 +128,7 @@ pub struct Ruleset {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct PlayerSummary {
     pub seat: u8,
     pub name: String,
@@ -187,10 +145,7 @@ pub struct PlayerSummary {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct PlayerStats {
     pub hands: u32,
     pub wins: u32,
@@ -216,10 +171,7 @@ pub struct PlayerStats {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct PlayerRates {
     pub win_rate: f64,
     pub tsumo_win_rate: f64,
@@ -236,10 +188,7 @@ pub struct PlayerRates {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct CallStats {
     pub total: u32,
     pub chi: u32,
@@ -253,10 +202,7 @@ pub struct CallStats {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct BonusStats {
     pub dora: u32,
     pub ura_dora: u32,
@@ -272,10 +218,7 @@ pub struct BonusStats {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct YakuCount {
     pub id: u8,
     pub name: String,
@@ -285,10 +228,7 @@ pub struct YakuCount {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct CountBucket {
     pub value: u32,
     pub count: u32,
@@ -297,10 +237,7 @@ pub struct CountBucket {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct Kyoku {
     pub round_index: u8,
     pub bakaze: u8,
@@ -319,10 +256,7 @@ pub struct Kyoku {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(tag = "type", rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub enum KyokuResult {
     Win {
         wins: Vec<WinResult>,
@@ -337,10 +271,7 @@ pub enum KyokuResult {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct WinResult {
     pub winner: u8,
     pub from_seat: u8,
@@ -359,10 +290,7 @@ pub struct WinResult {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(tag = "type", rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub enum DrawReason {
     Exhaustive,
     NineTerminals,
@@ -377,10 +305,7 @@ pub enum DrawReason {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct Yaku {
     pub id: u8,
     pub name: String,
@@ -391,10 +316,7 @@ pub struct Yaku {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(tag = "type")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub enum TurnEvent {
     Draw {
         seat: u8,
@@ -422,10 +344,7 @@ pub enum TurnEvent {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub enum CallKind {
     Chi,
     Pon,
@@ -438,10 +357,7 @@ pub enum CallKind {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct DealInMatrix {
     pub players: Vec<String>,
     pub counts: Vec<Vec<u32>>,
@@ -450,10 +366,7 @@ pub struct DealInMatrix {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct CareerStats {
     pub player_names: Vec<String>,
     pub games: u32,
@@ -467,10 +380,7 @@ pub struct CareerStats {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
-#[cfg_attr(
-    feature = "bindings",
-    ts(export, export_to = "../../packages/api-types/src/")
-)]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct ScoreTrendPoint {
     pub log_id: String,
     pub player_name: String,
