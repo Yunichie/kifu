@@ -9,6 +9,7 @@
   let kyokuIndex = $state(0);
   let viewedSeat = $state(0);
   let turnIndex = $state(0);
+  let activeSeats = $derived(data.game.players.map((player) => player.seat).toSorted((a, b) => a - b));
   let kyoku = $derived(data.game.kyoku[kyokuIndex]);
   let isLastKyoku = $derived(kyokuIndex === data.game.kyoku.length - 1);
   let endScores = $derived(
@@ -65,7 +66,7 @@
       <div class="field-label">Viewed seat</div>
       <div class="max-w-full overflow-x-auto">
         <div class="flex min-w-max border-b border-border-subtle" role="tablist" aria-label="Viewed seat">
-          {#each [0, 1, 2, 3] as seat (seat)}
+          {#each activeSeats as seat (seat)}
             <button
               class={[
                 'min-h-10 whitespace-nowrap border-b-2 px-3 text-[13px] font-semibold transition-colors duration-fast hover:bg-surface-2',
@@ -83,7 +84,13 @@
   </div>
 
   <div class="-mx-5 overflow-x-auto px-5 pb-2 sm:mx-0 sm:px-0" {@attach centerBoard}>
-    <TableBoard {snapshot} players={data.game.players} {viewedSeat} honba={kyoku.honba} />
+    <TableBoard
+      {snapshot}
+      players={data.game.players}
+      {viewedSeat}
+      honba={kyoku.honba}
+      result={kyoku.result}
+    />
   </div>
 
   {#key kyokuIndex}
