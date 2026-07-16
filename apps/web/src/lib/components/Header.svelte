@@ -1,7 +1,9 @@
 <script lang="ts">
   import type { MeResponse } from '@kifu/api-types';
   import { page } from '$app/state';
-  import { ChevronDown, LogIn, Plus } from 'lucide-svelte';
+  import ChevronDown from 'lucide-svelte/icons/chevron-down';
+  import LogIn from 'lucide-svelte/icons/log-in';
+  import Plus from 'lucide-svelte/icons/plus';
 
   let { me }: { me: MeResponse | null } = $props();
 </script>

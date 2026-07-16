@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { ArrowLeft } from 'lucide-svelte';
+  import ArrowLeft from 'lucide-svelte/icons/arrow-left';
   import { rulesLabel } from '$lib/format';
   import type { LayoutProps } from './$types';
 

@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { CircleAlert, FilePlus2, LogIn, Plus, Users } from 'lucide-svelte';
+  import CircleAlert from 'lucide-svelte/icons/circle-alert';
+  import FilePlus2 from 'lucide-svelte/icons/file-plus-2';
+  import LogIn from 'lucide-svelte/icons/log-in';
+  import Plus from 'lucide-svelte/icons/plus';
+  import Users from 'lucide-svelte/icons/users';
   import GameList from '$lib/components/GameList.svelte';
   import type { PageProps } from './$types';
 

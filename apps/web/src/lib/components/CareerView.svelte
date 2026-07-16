@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { CareerStats } from '@kifu/api-types';
-  import { ChartNoAxesCombined, FileSearch } from 'lucide-svelte';
+  import ChartNoAxesCombined from 'lucide-svelte/icons/chart-no-axes-combined';
+  import FileSearch from 'lucide-svelte/icons/file-search';
   import ChartCard from '$lib/components/ChartCard.svelte';
   import DealInMatrix from '$lib/components/DealInMatrix.svelte';
   import ScoreTrend from '$lib/components/ScoreTrend.svelte';

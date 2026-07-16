@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Users } from 'lucide-svelte';
+  import Users from 'lucide-svelte/icons/users';
   import CareerView from '$lib/components/CareerView.svelte';
   import type { PageProps } from './$types';
 

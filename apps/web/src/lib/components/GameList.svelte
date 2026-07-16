@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { GameListItem } from '@kifu/api-types';
-  import { ArrowRight, X } from 'lucide-svelte';
+  import ArrowRight from 'lucide-svelte/icons/arrow-right';
+  import X from 'lucide-svelte/icons/x';
   import { formatDate, formatScore, rulesLabel } from '$lib/format';
 
   let {

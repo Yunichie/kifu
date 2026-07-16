@@ -1,6 +1,9 @@
 <script lang="ts">
   import type { TurnEvent } from '@kifu/api-types';
-  import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-svelte';
+  import ChevronLeft from 'lucide-svelte/icons/chevron-left';
+  import ChevronRight from 'lucide-svelte/icons/chevron-right';
+  import Pause from 'lucide-svelte/icons/pause';
+  import Play from 'lucide-svelte/icons/play';
   import { tileLabel } from '$lib/replay/tiles';
 
   let {

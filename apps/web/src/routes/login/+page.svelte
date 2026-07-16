@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { CircleAlert, LogIn, UserPlus } from 'lucide-svelte';
+  import CircleAlert from 'lucide-svelte/icons/circle-alert';
+  import LogIn from 'lucide-svelte/icons/log-in';
+  import UserPlus from 'lucide-svelte/icons/user-plus';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
