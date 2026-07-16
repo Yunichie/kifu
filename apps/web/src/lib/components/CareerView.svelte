@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { CareerStats } from '@kifu/api-types';
   import ChartNoAxesCombined from 'lucide-svelte/icons/chart-no-axes-combined';
-  import FileSearch from 'lucide-svelte/icons/file-search';
   import ChartCard from '$lib/components/ChartCard.svelte';
   import DealInMatrix from '$lib/components/DealInMatrix.svelte';
+  import PercentBar from '$lib/components/PercentBar.svelte';
   import ScoreTrend from '$lib/components/ScoreTrend.svelte';
   import StatTile from '$lib/components/StatTile.svelte';
   import { formatPercent, formatScore } from '$lib/format';
@@ -23,8 +23,7 @@
   let placementItems = $derived(
     [1, 2, 3, 4].map((value) => ({
       label: `${value}${value === 1 ? 'st' : value === 2 ? 'nd' : value === 3 ? 'rd' : 'th'}`,
-      count: career.placementDistribution.find((item) => item.value === value)?.count ?? 0,
-      opacity: `${100 - (value - 1) * 20}%`
+      count: career.placementDistribution.find((item) => item.value === value)?.count ?? 0
     }))
   );
   let yakuItems = $derived(
@@ -43,31 +42,21 @@
   }
 </script>
 
-{#snippet bars(items: { label: string; count: number; opacity?: string }[])}
+{#snippet bars(items: { label: string; count: number }[], tone: 'gold' | 'win' | 'loss' | 'ai')}
   <div class="space-y-2">
     {#each items as item (item.label)}
-      <div class="grid grid-cols-[minmax(5rem,auto)_1fr_2rem] items-center gap-3 text-[13px] leading-[19px]">
-        <span class="truncate text-text-secondary" title={item.label}>{item.label}</span>
-        <div class="h-2 overflow-hidden rounded-sm bg-surface-3">
-          <div
-            class="bar h-full bg-gold"
-            style:--bar-width={`${(item.count / maximum(items)) * 100}%`}
-            style:--bar-opacity={item.opacity ?? '100%'}
-          ></div>
-        </div>
-        <span class="text-right font-mono text-text-primary">{item.count}</span>
-      </div>
+      <PercentBar label={item.label} value={item.count} maximum={maximum(items)} display={String(item.count)} {tone} />
     {/each}
   </div>
 {/snippet}
 
 <header class="mb-6">
-  <p class="text-[11px] leading-[15px] font-medium uppercase text-text-tertiary">Career</p>
+  <p class="section-kicker">Career</p>
   <h1 class="mt-1 font-display text-xl leading-[26px] font-semibold">{title}</h1>
   {#if career.playerNames.length > 0}
     <div class="mt-3 flex flex-wrap gap-2">
       {#each career.playerNames as name (name)}
-        <span class="rounded-sm bg-surface-3 px-2.5 py-1 text-[11px] leading-[15px] font-medium text-text-secondary">{name}</span>
+        <span class="stamp-tag">{name}</span>
       {/each}
     </div>
   {/if}
@@ -75,7 +64,7 @@
 
 {#if career.games === 0}
   <section class="panel flex min-h-56 flex-col items-center justify-center gap-3 text-center">
-    <FileSearch class="text-text-tertiary opacity-20" size={40} strokeWidth={1.5} aria-hidden="true" />
+    <span class="empty-tile" aria-hidden="true"><i></i></span>
     <p class="text-[13px] leading-[19px] text-text-tertiary">No matching games in the ledger.</p>
     <a class="button-primary" href={emptyHref}>{emptyLabel}</a>
   </section>
@@ -83,12 +72,12 @@
   <section class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Career headline statistics">
     <StatTile label="Games" value={career.games} />
     <StatTile label="Hands" value={career.stats.hands} />
-    <StatTile label="Avg place" value={career.averagePlacement?.toFixed(2) ?? '-'} />
-    <StatTile label="Win rate" value={formatPercent(career.stats.rates.winRate)} />
-    <StatTile label="Deal-in" value={formatPercent(career.stats.rates.dealInRate)} />
-    <StatTile label="Riichi" value={formatPercent(career.stats.rates.riichiRate)} />
+    <StatTile label="Avg place" value={career.averagePlacement?.toFixed(2) ?? '-'} tone="gold" />
+    <StatTile label="Win rate" value={formatPercent(career.stats.rates.winRate)} tone="win" />
+    <StatTile label="Deal-in" value={formatPercent(career.stats.rates.dealInRate)} tone="loss" />
+    <StatTile label="Riichi" value={formatPercent(career.stats.rates.riichiRate)} tone="gold" />
     <StatTile label="Call rate" value={formatPercent(career.stats.rates.callRate)} />
-    <StatTile label="Tenpai" value={formatPercent(career.stats.rates.tenpaiRate)} />
+    <StatTile label="Tenpai" value={formatPercent(career.stats.rates.tenpaiRate)} tone="win" />
   </section>
 
   <div class="mb-4 grid gap-4 sm:grid-cols-2">
@@ -142,21 +131,21 @@
   </div>
 
   <div class="mb-4 grid gap-4 sm:grid-cols-2">
-    <ChartCard title="Placement distribution">{@render bars(placementItems)}</ChartCard>
+    <ChartCard title="Placement distribution">{@render bars(placementItems, 'gold')}</ChartCard>
     <ChartCard title="Yaku frequency">
-      {#if yakuItems.length > 0}{@render bars(yakuItems)}{:else}<p class="text-[13px] text-text-tertiary">No winning yaku recorded.</p>{/if}
+      {#if yakuItems.length > 0}{@render bars(yakuItems, 'win')}{:else}<p class="text-[13px] text-text-tertiary">No winning yaku recorded.</p>{/if}
     </ChartCard>
   </div>
 
   <div class="mb-4 grid gap-4 sm:grid-cols-3">
     <ChartCard title="Han distribution">
-      {#if hanItems.length > 0}{@render bars(hanItems)}{:else}<p class="text-[13px] text-text-tertiary">No winning hands recorded.</p>{/if}
+      {#if hanItems.length > 0}{@render bars(hanItems, 'ai')}{:else}<p class="text-[13px] text-text-tertiary">No winning hands recorded.</p>{/if}
     </ChartCard>
     <ChartCard title="Fu distribution">
-      {#if fuItems.length > 0}{@render bars(fuItems)}{:else}<p class="text-[13px] text-text-tertiary">No winning hands recorded.</p>{/if}
+      {#if fuItems.length > 0}{@render bars(fuItems, 'ai')}{:else}<p class="text-[13px] text-text-tertiary">No winning hands recorded.</p>{/if}
     </ChartCard>
     <ChartCard title="Hand values">
-      {#if valueItems.length > 0}{@render bars(valueItems)}{:else}<p class="text-[13px] text-text-tertiary">No winning hands recorded.</p>{/if}
+      {#if valueItems.length > 0}{@render bars(valueItems, 'gold')}{:else}<p class="text-[13px] text-text-tertiary">No winning hands recorded.</p>{/if}
     </ChartCard>
   </div>
 
@@ -189,9 +178,6 @@
 {/if}
 
 <style>
-  .bar {
-    width: var(--bar-width);
-    opacity: var(--bar-opacity);
-    transition: width var(--motion-base) ease-out;
-  }
+  .empty-tile { display: grid; width: 32px; height: 44px; place-items: center; border: 2px solid color-mix(in srgb, var(--kinari) 42%, transparent); border-radius: 4px; background: var(--surface-3); opacity: 0.48; transform: rotate(-5deg); }
+  .empty-tile i { width: 15px; height: 15px; border: 1px solid var(--gold); border-radius: 50%; }
 </style>

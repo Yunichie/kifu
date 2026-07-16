@@ -16,14 +16,22 @@
     }))
   );
   let polyline = $derived(coordinates.map(({ x, y }) => `${x},${y}`).join(' '));
+  let area = $derived(`${padding},${height - padding} ${polyline} ${width - padding},${height - padding}`);
 </script>
 
 <div class="aspect-[16/5] min-h-44 w-full" aria-hidden="true">
   <svg class="h-full w-full" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="ink-wash" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="var(--gold)" stop-opacity="0.18" />
+        <stop offset="1" stop-color="var(--gold)" stop-opacity="0" />
+      </linearGradient>
+    </defs>
     {#each [0.25, 0.5, 0.75] as position (position)}
       <line class="grid-line" x1={padding} x2={width - padding} y1={height * position} y2={height * position} />
     {/each}
     {#if points.length > 1}
+      <polygon points={area} fill="url(#ink-wash)" />
       <polyline class="trend-line" points={polyline} fill="none" />
     {/if}
     {#each coordinates as coordinate (`${coordinate.point.logId}-${coordinate.point.playerName}`)}
@@ -40,7 +48,7 @@
 
   .trend-line {
     stroke: var(--gold);
-    stroke-width: 3;
+    stroke-width: 2;
     vector-effect: non-scaling-stroke;
   }
 

@@ -19,7 +19,7 @@
   />
 {:else}
   <header class="mb-6">
-    <p class="text-[11px] leading-[15px] font-medium uppercase text-text-tertiary">Career</p>
+    <p class="section-kicker">Career</p>
     <h1 class="mt-1 font-display text-xl leading-[26px] font-semibold">Browse player records</h1>
   </header>
   <section class="panel">
@@ -31,7 +31,7 @@
       <div class="flex flex-wrap gap-2">
         {#each data.players as player (player)}
           <a
-            class="rounded-sm bg-surface-3 px-2.5 py-1.5 text-[11px] leading-[15px] font-medium text-text-secondary transition-colors duration-fast hover:text-text-primary"
+            class="stamp-tag transition-colors duration-fast hover:border-gold hover:text-gold"
             href={`/career/${encodeURIComponent(player)}`}>{player}</a
           >
         {/each}

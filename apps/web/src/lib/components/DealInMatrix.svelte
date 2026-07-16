@@ -1,12 +1,10 @@
 <script lang="ts">
   import type { DealInMatrix } from '@kifu/api-types';
+  import HeatmapCell from '$lib/components/HeatmapCell.svelte';
 
   let { matrix }: { matrix: DealInMatrix } = $props();
   let maximum = $derived(Math.max(0, ...matrix.counts.flat()));
 
-  function tint(count: number): string {
-    return maximum === 0 ? '0%' : `${Math.round((count / maximum) * 35)}%`;
-  }
 </script>
 
 <div class="table-shell">
@@ -25,11 +23,9 @@
           <th class="max-w-32 truncate text-left" title={player}>{player}</th>
           {#each matrix.players as _recipient, column (`${row}-${column}`)}
             {#if row === column}
-              <td class="bg-surface-1 text-text-tertiary">-</td>
+              <td class="bg-surface-2 text-text-tertiary">-</td>
             {:else}
-              <td style:--cell-tint={tint(matrix.counts[row]?.[column] ?? 0)}>
-                <span class="matrix-cell">{matrix.counts[row]?.[column] ?? 0}</span>
-              </td>
+              <td><HeatmapCell value={matrix.counts[row]?.[column] ?? 0} {maximum} /></td>
             {/if}
           {/each}
         </tr>
@@ -37,12 +33,3 @@
     </tbody>
   </table>
 </div>
-
-<style>
-  .matrix-cell {
-    display: block;
-    margin: -0.625rem -0.75rem;
-    padding: 0.625rem 0.75rem;
-    background: color-mix(in srgb, var(--man) var(--cell-tint), transparent);
-  }
-</style>
