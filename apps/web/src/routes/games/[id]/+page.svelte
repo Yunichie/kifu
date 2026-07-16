@@ -6,6 +6,13 @@
 
   let { data }: PageProps = $props();
   const seatBorders = ['border-t-man', 'border-t-pin', 'border-t-sou', 'border-t-gold'];
+  let finalScores = $derived(
+    data.game.players.toSorted((a, b) => a.seat - b.seat).map((player) => player.finalScore ?? 0)
+  );
+  let terminalSettlement = $derived(
+    data.game.kyoku.length > 0 &&
+    finalScores.some((score, seat) => score !== data.game.kyoku.at(-1)?.endScores[seat])
+  );
 </script>
 
 <svelte:head>
@@ -48,7 +55,7 @@
         </tr>
       </thead>
       <tbody>
-        {#each data.game.kyoku as kyoku (`${kyoku.roundIndex}-${kyoku.honba}`)}
+        {#each data.game.kyoku as kyoku, index (`${kyoku.roundIndex}-${kyoku.honba}`)}
           <tr class={`border-l-[3px] ${kyoku.result.type === 'win' ? 'border-l-sou' : 'border-l-border'}`}>
             <td>{roundLabel(kyoku.bakaze, kyoku.kyokuNumber, kyoku.honba)}</td>
             <td class="font-sans">{resultLabel(kyoku.result, data.game.players)}</td>
@@ -61,6 +68,20 @@
               </td>
             {/each}
           </tr>
+          {#if index === data.game.kyoku.length - 1 && terminalSettlement}
+            <tr class="border-l-[3px] border-l-gold">
+              <td>Final</td>
+              <td class="font-sans">Final settlement</td>
+              {#each finalScores as score, seat (seat)}
+                <td>
+                  {formatScore(score)}
+                  <span class={score - kyoku.endScores[seat] < 0 ? 'text-man' : 'text-sou'}>
+                    {formatSigned(score - kyoku.endScores[seat])}
+                  </span>
+                </td>
+              {/each}
+            </tr>
+          {/if}
         {/each}
       </tbody>
     </table>
