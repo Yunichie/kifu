@@ -9,12 +9,13 @@ const MINIMUM_SPACING_MS: u64 = 1_000;
 const CACHE_COMMIT_LEASE_MS: u64 = 120_000;
 const CACHE_POLL_MS: u64 = 100;
 const PENDING_PREFIX: &str = "pending:";
+const LAST_FINISHED_AT_KEY: &str = "last_finished_at";
 
 #[durable_object]
 pub struct TenhouQueueDO {
     state: State,
     env: Env,
-    last_finished_at: Mutex<u64>,
+    fetch_lock: Mutex<()>,
 }
 
 impl DurableObject for TenhouQueueDO {
@@ -22,7 +23,7 @@ impl DurableObject for TenhouQueueDO {
         Self {
             state,
             env,
-            last_finished_at: Mutex::new(0),
+            fetch_lock: Mutex::new(()),
         }
     }
 
@@ -50,7 +51,7 @@ impl DurableObject for TenhouQueueDO {
         }
 
         // Holding this guard across the fetch is the global serialization point.
-        let mut last_finished_at = self.last_finished_at.lock().await;
+        let _fetch_guard = self.fetch_lock.lock().await;
         let db = self.env.d1("DB")?;
         if games::exists(&db, &log_id).await? {
             self.state.storage().delete(&pending_key).await?;
@@ -63,8 +64,13 @@ impl DurableObject for TenhouQueueDO {
             return Ok(Response::empty()?.with_status(204));
         }
 
-        let wait_ms = MINIMUM_SPACING_MS
-            .saturating_sub(Date::now().as_millis().saturating_sub(*last_finished_at));
+        let last_finished_at = self
+            .state
+            .storage()
+            .get::<u64>(LAST_FINISHED_AT_KEY)
+            .await?
+            .unwrap_or_default();
+        let wait_ms = spacing_delay_ms(Date::now().as_millis(), last_finished_at);
         if wait_ms > 0 {
             Delay::from(Duration::from_millis(wait_ms)).await;
         }
@@ -76,7 +82,10 @@ impl DurableObject for TenhouQueueDO {
         self.state.storage().put(&pending_key, started_at).await?;
         let result = tenhou_fetch::fetch_from_tenhou(&log_id).await;
         let finished_at = Date::now().as_millis();
-        *last_finished_at = finished_at;
+        self.state
+            .storage()
+            .put(LAST_FINISHED_AT_KEY, finished_at)
+            .await?;
         worker::console_log!("tenhou_queue finish log_id={log_id} at={finished_at}");
 
         match result {
@@ -91,6 +100,10 @@ impl DurableObject for TenhouQueueDO {
             }
         }
     }
+}
+
+fn spacing_delay_ms(now: u64, last_finished_at: u64) -> u64 {
+    MINIMUM_SPACING_MS.saturating_sub(now.saturating_sub(last_finished_at))
 }
 
 impl TenhouQueueDO {
@@ -120,5 +133,17 @@ impl TenhouQueueDO {
             ))
             .await;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::spacing_delay_ms;
+
+    #[test]
+    fn enforces_minimum_spacing_after_the_last_fetch() {
+        assert_eq!(spacing_delay_ms(1_100, 1_000), 900);
+        assert_eq!(spacing_delay_ms(2_000, 1_000), 0);
+        assert_eq!(spacing_delay_ms(2_001, 1_000), 0);
     }
 }
