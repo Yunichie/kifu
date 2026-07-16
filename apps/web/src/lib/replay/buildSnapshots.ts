@@ -4,6 +4,7 @@ export type ReplayDiscard = {
   tile: number;
   tsumogiri: boolean;
   calledBy: number | null;
+  riichi: boolean;
 };
 
 export type ReplayMeld = {
@@ -102,7 +103,7 @@ function applyEvent(snapshot: TableSnapshot, event: TurnEvent): void {
     case 'Discard':
       removeTile(snapshot.hands[event.seat], event.tile);
       snapshot.drawnTiles[event.seat] = null;
-      snapshot.discards[event.seat].push({ tile: event.tile, tsumogiri: event.tsumogiri, calledBy: null });
+      snapshot.discards[event.seat].push({ tile: event.tile, tsumogiri: event.tsumogiri, calledBy: null, riichi: false });
       return;
     case 'Call':
       applyCall(snapshot, event);
@@ -110,6 +111,7 @@ function applyEvent(snapshot: TableSnapshot, event: TurnEvent): void {
     case 'Riichi':
       snapshot.scores[event.seat] -= 1_000;
       snapshot.riichiSticks += 1;
+      if (snapshot.discards[event.seat].length > 0) snapshot.discards[event.seat].at(-1)!.riichi = true;
       return;
     case 'NewDora':
       snapshot.doraIndicators.push(event.tile);

@@ -31,6 +31,11 @@ describe('buildSnapshots', () => {
       expect(final.doraIndicators).toEqual(kyoku.doraIndicators);
       finalScores = final.scores;
 
+      const riichiSnapshot = snapshots.find((snapshot) => snapshot.event?.type === 'Riichi');
+      if (riichiSnapshot?.event?.type === 'Riichi') {
+        expect(riichiSnapshot.discards[riichiSnapshot.event.seat].at(-1)?.riichi).toBe(true);
+      }
+
       if (index === 0) {
         const beforeSettlement = snapshots.at(-2)!;
         expect(beforeSettlement.settled).toBe(false);
