@@ -13,7 +13,7 @@
 
 <div class="max-w-2xl">
   <header class="mb-6">
-    <p class="text-[11px] leading-[15px] font-medium uppercase text-text-tertiary">Settings</p>
+    <p class="section-kicker">Settings</p>
     <h1 class="mt-1 font-display text-xl leading-[26px] font-semibold">Your Tenhou names</h1>
     <p class="mt-2 max-w-xl text-[13px] leading-[19px] text-text-tertiary">
       We can't verify Tenhou account ownership. This just tells the app which name is yours when
@@ -33,7 +33,7 @@
       <div class="mb-5 flex flex-wrap gap-2">
         {#each data.me.playerNames as name (name)}
           <form
-            class="inline-flex items-center rounded-sm bg-surface-3 pl-2.5 text-[11px] leading-[15px] font-medium text-text-secondary"
+            class="stamp-tag inline-flex items-center pl-2.5 text-text-secondary"
             method="POST"
             action="?/removeName"
           >

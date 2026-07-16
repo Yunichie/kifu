@@ -1,6 +1,5 @@
 <script lang="ts">
   import CircleAlert from 'lucide-svelte/icons/circle-alert';
-  import FilePlus2 from 'lucide-svelte/icons/file-plus-2';
   import LogIn from 'lucide-svelte/icons/log-in';
   import Plus from 'lucide-svelte/icons/plus';
   import Users from 'lucide-svelte/icons/users';
@@ -70,7 +69,7 @@
     <GameList games={data.games} removable={data.view === 'library'} />
   {:else}
     <div class="flex min-h-40 flex-col items-center justify-center gap-3 text-center text-text-tertiary">
-      <FilePlus2 class="opacity-20" size={36} strokeWidth={1.5} aria-hidden="true" />
+      <span class="empty-tile" aria-hidden="true"><i></i></span>
       <p class="text-[13px] leading-[19px]">
         {data.view === 'library' ? 'No logs saved yet.' : 'No logs added yet.'}
       </p>
@@ -85,15 +84,15 @@
 
 <section>
   <div class="mb-4 flex items-center gap-2">
-    <Users size={18} strokeWidth={1.75} class="text-text-secondary" aria-hidden="true" />
+    <Users size={18} strokeWidth={1.75} class="text-gold" aria-hidden="true" />
     <h2 class="font-display text-xl leading-[26px] font-semibold">Players</h2>
   </div>
   {#if data.players.length > 0}
     <div class="flex flex-wrap gap-2">
       {#each data.players as player (player)}
         <a
-          class="rounded-sm bg-surface-3 px-2.5 py-1.5 text-[11px] leading-[15px] font-medium text-text-secondary transition-colors duration-fast hover:text-text-primary"
-          href={`/career/${encodeURIComponent(player)}`}>{player}</a
+          class="stamp-tag gap-1.5 transition-colors duration-fast hover:border-gold hover:text-gold"
+          href={`/career/${encodeURIComponent(player)}`}><span class="suit-bullet" lang="ja">萬</span>{player}</a
         >
       {/each}
     </div>
@@ -101,3 +100,9 @@
     <p class="text-[13px] leading-[19px] text-text-tertiary">Players appear after a log is added.</p>
   {/if}
 </section>
+
+<style>
+  .empty-tile { display: grid; width: 30px; height: 42px; place-items: center; border: 2px solid color-mix(in srgb, var(--kinari) 42%, transparent); border-radius: 4px; background: var(--surface-3); opacity: 0.48; transform: rotate(-5deg); }
+  .empty-tile i { width: 14px; height: 14px; border: 1px solid var(--gold); border-radius: 50%; }
+  .suit-bullet { color: var(--shu); font-family: "Shippori Mincho", serif; font-size: 12px; }
+</style>
