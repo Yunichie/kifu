@@ -49,14 +49,45 @@ async fn add(
         return Ok(Json(game));
     }
 
-    let xml = tenhou_fetch::fetch_via_queue(state.tenhou_queue(), &log_id)
+    let fetched = tenhou_fetch::fetch_via_queue(state.tenhou_queue(), &log_id)
         .await
         .map_err(ApiError::bad_gateway)?;
-    let game = domain::parse_game(log_id, &xml).map_err(ApiError::unprocessable)?;
-    games::persist_and_save(state.db(), user.id, &game, now_millis())
-        .await
-        .map_err(ApiError::internal)?;
+    let game = match fetched {
+        tenhou_fetch::QueueFetch::Cached => {
+            let game = games::find(state.db(), &log_id)
+                .await
+                .map_err(ApiError::internal)?
+                .ok_or(ApiError::Internal)?;
+            games::save_for_user(state.db(), user.id, &log_id, now_millis())
+                .await
+                .map_err(ApiError::internal)?;
+            game
+        }
+        tenhou_fetch::QueueFetch::Fetched(xml) => {
+            let game = match domain::parse_game(&log_id, &xml) {
+                Ok(game) => game,
+                Err(error) => {
+                    finish_queue_fetch(&state, &log_id).await;
+                    return Err(ApiError::unprocessable(error));
+                }
+            };
+            if let Err(error) =
+                games::persist_and_save(state.db(), user.id, &game, now_millis()).await
+            {
+                finish_queue_fetch(&state, &log_id).await;
+                return Err(ApiError::internal(error));
+            }
+            finish_queue_fetch(&state, &log_id).await;
+            game
+        }
+    };
     Ok(Json(game))
+}
+
+async fn finish_queue_fetch(state: &AppState, log_id: &str) {
+    if let Err(error) = tenhou_fetch::complete_queue_fetch(state.tenhou_queue(), log_id).await {
+        worker::console_error!("failed to release Tenhou fetch lease for {log_id}: {error}");
+    }
 }
 
 #[worker::send]

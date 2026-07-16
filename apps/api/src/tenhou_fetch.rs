@@ -7,6 +7,12 @@ use worker::ObjectNamespace;
 const QUEUE_OBJECT_NAME: &str = "global";
 const USER_AGENT: &str = "kifu/0.1 (Tenhou statistics tracker)";
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum QueueFetch {
+    Fetched(String),
+    Cached,
+}
+
 #[derive(Debug, Error)]
 pub enum FetchError {
     #[error("invalid Tenhou log ID or URL")]
@@ -37,7 +43,7 @@ pub fn canonical_log_id(input: &str) -> Result<String, FetchError> {
 pub async fn fetch_via_queue(
     namespace: &ObjectNamespace,
     log_id: &str,
-) -> Result<String, FetchError> {
+) -> Result<QueueFetch, FetchError> {
     let stub = namespace
         .get_by_name(QUEUE_OBJECT_NAME)
         .map_err(|error| FetchError::Queue(error.to_string()))?;
@@ -51,13 +57,27 @@ pub async fn fetch_via_queue(
         .await
         .map_err(|error| FetchError::Queue(error.to_string()))?;
 
-    if status != 200 {
-        return Err(FetchError::Queue(body));
+    queue_result(status, body)
+}
+
+pub async fn complete_queue_fetch(
+    namespace: &ObjectNamespace,
+    log_id: &str,
+) -> Result<(), FetchError> {
+    let stub = namespace
+        .get_by_name(QUEUE_OBJECT_NAME)
+        .map_err(|error| FetchError::Queue(error.to_string()))?;
+    let response = stub
+        .fetch_with_str(&format!("https://tenhou-queue/complete?log_id={log_id}"))
+        .await
+        .map_err(|error| FetchError::Queue(error.to_string()))?;
+    if response.status_code() != 204 {
+        return Err(FetchError::Queue(format!(
+            "queue completion returned HTTP {}",
+            response.status_code()
+        )));
     }
-    if body.trim().is_empty() {
-        return Err(FetchError::EmptyBody);
-    }
-    Ok(body)
+    Ok(())
 }
 
 pub async fn fetch_from_tenhou(log_id: &str) -> Result<String, FetchError> {
@@ -79,9 +99,18 @@ pub async fn fetch_from_tenhou(log_id: &str) -> Result<String, FetchError> {
     Ok(body)
 }
 
+fn queue_result(status: u16, body: String) -> Result<QueueFetch, FetchError> {
+    match status {
+        204 => Ok(QueueFetch::Cached),
+        200 if body.trim().is_empty() => Err(FetchError::EmptyBody),
+        200 => Ok(QueueFetch::Fetched(body)),
+        _ => Err(FetchError::Queue(body)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{FetchError, canonical_log_id};
+    use super::{FetchError, QueueFetch, canonical_log_id, queue_result};
 
     const LOG_ID: &str = "2017010100gm-00a9-0000-003dbd5d";
 
@@ -99,6 +128,22 @@ mod tests {
         assert!(matches!(
             canonical_log_id("https://example.com/not-a-log"),
             Err(FetchError::InvalidLogId)
+        ));
+    }
+
+    #[test]
+    fn distinguishes_fetched_logs_from_queue_cache_hits() {
+        assert_eq!(
+            queue_result(200, "<mjloggm />".into()).unwrap(),
+            QueueFetch::Fetched("<mjloggm />".into())
+        );
+        assert_eq!(
+            queue_result(204, String::new()).unwrap(),
+            QueueFetch::Cached
+        );
+        assert!(matches!(
+            queue_result(200, "  ".into()),
+            Err(FetchError::EmptyBody)
         ));
     }
 }
