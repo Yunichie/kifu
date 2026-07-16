@@ -1,4 +1,4 @@
-import type { CallKind, TurnEvent } from '@kifu/api-types';
+import type { CallKind, KyokuResult, TurnEvent } from '@kifu/api-types';
 
 export type ReplayDiscard = {
   tile: number;
@@ -24,6 +24,7 @@ export type TableSnapshot = {
   remainingWall: number;
   riichiSticks: number;
   event: TurnEvent | null;
+  settled: boolean;
 };
 
 export type SnapshotOptions = {
@@ -31,6 +32,8 @@ export type SnapshotOptions = {
   endScores?: number[];
   initialDoraIndicators?: number[];
   riichiSticks?: number;
+  result?: KyokuResult;
+  clearRiichiSticks?: boolean;
 };
 
 export function buildSnapshots(
@@ -54,23 +57,39 @@ export function buildSnapshots(
     ),
     remainingWall: Math.max(0, initialWall),
     riichiSticks: options.riichiSticks ?? 0,
-    event: null
+    event: null,
+    settled: false
   };
   const snapshots = [initial];
 
   for (const [index, event] of events.entries()) {
     const snapshot = cloneSnapshot(snapshots[index], index + 1, event);
     applyEvent(snapshot, event);
-    if (index === events.length - 1 && options.endScores) {
-      snapshot.scores = fourSeats(options.endScores, (score) => score);
-    }
     snapshots.push(snapshot);
   }
 
-  if (events.length === 0 && options.endScores) {
-    initial.scores = fourSeats(options.endScores, (score) => score);
+  if (options.endScores) {
+    const settlement = cloneSnapshot(snapshots.at(-1)!, snapshots.length, null);
+    settlement.scores = fourSeats(options.endScores, (score) => score);
+    settlement.settled = true;
+    applySettlement(settlement, options.result, options.clearRiichiSticks ?? false);
+    snapshots.push(settlement);
   }
   return snapshots;
+}
+
+function applySettlement(
+  snapshot: TableSnapshot,
+  result: KyokuResult | undefined,
+  clearRiichiSticks: boolean
+): void {
+  if (result?.type === 'win') {
+    for (const win of result.wins) {
+      snapshot.hands[win.winner] = [...win.winningTiles];
+      snapshot.drawnTiles[win.winner] = null;
+    }
+  }
+  if (result?.type === 'win' || clearRiichiSticks) snapshot.riichiSticks = 0;
 }
 
 function applyEvent(snapshot: TableSnapshot, event: TurnEvent): void {
@@ -136,7 +155,7 @@ function applyCall(snapshot: TableSnapshot, event: Extract<TurnEvent, { type: 'C
   });
 }
 
-function cloneSnapshot(previous: TableSnapshot, turnIndex: number, event: TurnEvent): TableSnapshot {
+function cloneSnapshot(previous: TableSnapshot, turnIndex: number, event: TurnEvent | null): TableSnapshot {
   return {
     turnIndex,
     hands: previous.hands.map((hand) => [...hand]),
@@ -147,7 +166,8 @@ function cloneSnapshot(previous: TableSnapshot, turnIndex: number, event: TurnEv
     scores: [...previous.scores],
     remainingWall: previous.remainingWall,
     riichiSticks: previous.riichiSticks,
-    event
+    event,
+    settled: false
   };
 }
 

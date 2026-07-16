@@ -7,16 +7,18 @@
     turn,
     maxTurn,
     event,
+    settled,
     onTurnChange
   }: {
     turn: number;
     maxTurn: number;
     event: TurnEvent | null;
+    settled: boolean;
     onTurnChange: (turn: number) => void;
   } = $props();
 
   let playing = $state(false);
-  let description = $derived(describeEvent(event));
+  let description = $derived(settled ? 'Hand settled' : describeEvent(event));
 
   $effect(() => {
     if (!playing) return;

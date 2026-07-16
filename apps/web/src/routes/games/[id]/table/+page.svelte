@@ -10,8 +10,9 @@
   let viewedSeat = $state(0);
   let turnIndex = $state(0);
   let kyoku = $derived(data.game.kyoku[kyokuIndex]);
+  let isLastKyoku = $derived(kyokuIndex === data.game.kyoku.length - 1);
   let endScores = $derived(
-    kyokuIndex === data.game.kyoku.length - 1
+    isLastKyoku
       ? data.game.players.toSorted((a, b) => a.seat - b.seat).map((player) => player.finalScore ?? 0)
       : kyoku.endScores
   );
@@ -20,7 +21,9 @@
       startScores: kyoku.startScores,
       endScores,
       initialDoraIndicators: kyoku.doraIndicators.slice(0, 1),
-      riichiSticks: kyoku.riichiSticks
+      riichiSticks: kyoku.riichiSticks,
+      result: kyoku.result,
+      clearRiichiSticks: isLastKyoku
     })
   );
   let snapshot = $derived(snapshots[Math.min(turnIndex, snapshots.length - 1)]);
@@ -86,8 +89,9 @@
   {#key kyokuIndex}
     <ReplayScrubber
       turn={turnIndex}
-      maxTurn={kyoku.events.length}
+      maxTurn={snapshots.length - 1}
       event={snapshot.event}
+      settled={snapshot.settled}
       onTurnChange={(next) => turnIndex = next}
     />
   {/key}
