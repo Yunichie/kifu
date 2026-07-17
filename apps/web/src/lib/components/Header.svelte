@@ -34,7 +34,7 @@
           <summary
             class="flex cursor-pointer list-none items-center gap-1.5 text-sm text-text-secondary transition-colors duration-fast hover:text-text-primary"
           >
-            <span class="max-w-28 truncate">{me.user.username}</span>
+            <span class="max-w-28 truncate">{me.user.displayName}</span>
             <ChevronDown size={16} strokeWidth={1.75} aria-hidden="true" />
           </summary>
           <div

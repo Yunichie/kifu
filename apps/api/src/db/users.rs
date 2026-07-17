@@ -3,48 +3,38 @@ use serde::Deserialize;
 use worker::{D1Database, D1Type, Result};
 
 #[derive(Deserialize)]
-pub struct StoredUser {
-    pub id: i32,
-    pub username: String,
-    pub password_hash: String,
-}
-
-#[derive(Deserialize)]
 struct PlayerNameRow {
     player_name: String,
 }
 
-pub async fn create_user(
+pub async fn upsert_oauth_user(
     db: &D1Database,
-    username: &str,
-    password_hash: &str,
+    provider: &str,
+    provider_subject: &str,
+    display_name: &str,
     created_at: u64,
-) -> Result<Option<User>> {
+) -> Result<User> {
     let args = [
-        D1Type::Text(username),
-        D1Type::Text(password_hash),
+        D1Type::Text(provider),
+        D1Type::Text(provider_subject),
+        D1Type::Text(display_name),
         D1Type::Real(created_at as f64),
     ];
     db.prepare(
-        "INSERT OR IGNORE INTO users (username, password_hash, created_at) \
-         VALUES (?1, ?2, CAST(?3 AS INTEGER)) RETURNING id, username",
+        "INSERT INTO users (provider, provider_subject, display_name, created_at) \
+         VALUES (?1, ?2, ?3, CAST(?4 AS INTEGER)) \
+         ON CONFLICT(provider, provider_subject) DO UPDATE SET display_name = excluded.display_name \
+         RETURNING id, display_name AS displayName",
     )
     .bind_refs(&args)?
     .first(None)
-    .await
-}
-
-pub async fn find_by_username(db: &D1Database, username: &str) -> Result<Option<StoredUser>> {
-    let args = [D1Type::Text(username)];
-    db.prepare("SELECT id, username, password_hash FROM users WHERE username = ?1 LIMIT 1")
-        .bind_refs(&args)?
-        .first(None)
-        .await
+    .await?
+    .ok_or_else(|| worker::Error::RustError("OAuth user upsert returned no row".into()))
 }
 
 pub async fn find_by_id(db: &D1Database, user_id: i32) -> Result<Option<User>> {
     let args = [D1Type::Integer(user_id)];
-    db.prepare("SELECT id, username FROM users WHERE id = ?1 LIMIT 1")
+    db.prepare("SELECT id, display_name AS displayName FROM users WHERE id = ?1 LIMIT 1")
         .bind_refs(&args)?
         .first(None)
         .await

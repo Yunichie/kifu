@@ -7,11 +7,11 @@
   ],
   "scripts": {
     "dev:web": "bun run --cwd apps/web dev",
-    "dev:api": "wrangler dev --config apps/api/wrangler.jsonc",
+    "dev:api": "wrangler dev --cwd apps/api --config wrangler.jsonc",
     "codegen": "cargo run -p codegen --features domain/bindings",
     "build:api": "worker-build --release apps/api",
-    "deploy:api": "wrangler deploy --config apps/api/wrangler.jsonc",
-    "deploy:web": "bun run --cwd apps/web build && wrangler pages deploy apps/web/.svelte-kit/cloudflare",
+    "deploy:api": "bun run build:api && wrangler deploy --cwd apps/api --config wrangler.jsonc",
+    "deploy:web": "bun run --cwd apps/web build && wrangler pages deploy --cwd apps/web .svelte-kit/cloudflare",
     "test:domain": "cargo test -p domain"
   },
   "devDependencies": {

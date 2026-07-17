@@ -8,5 +8,6 @@ pub fn router() -> Router<AppState> {
         .merge(routes::games::router())
         .merge(routes::health::router())
         .merge(routes::me::router())
+        .merge(routes::oauth::router())
         .merge(routes::players::router())
 }

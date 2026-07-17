@@ -21,7 +21,7 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_classes": ["TenhouQueueDO"]
+      "new_sqlite_classes": ["TenhouQueueDO"]
     }
   ]
 }

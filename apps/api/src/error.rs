@@ -10,20 +10,15 @@ use domain::types::ErrorResponse;
 pub enum ApiError {
     BadRequest(String),
     Unauthorized,
-    Conflict(String),
     NotFound(String),
     Unprocessable,
-    BadGateway,
+    BadGateway(String),
     Internal,
 }
 
 impl ApiError {
     pub fn bad_request(message: impl Into<String>) -> Self {
         Self::BadRequest(message.into())
-    }
-
-    pub fn conflict(message: impl Into<String>) -> Self {
-        Self::Conflict(message.into())
     }
 
     pub fn not_found(message: impl Into<String>) -> Self {
@@ -37,7 +32,12 @@ impl ApiError {
 
     pub fn bad_gateway(error: impl Display) -> Self {
         worker::console_error!("upstream request failed: {error}");
-        Self::BadGateway
+        Self::BadGateway("Tenhou log could not be fetched".into())
+    }
+
+    pub fn upstream(message: impl Into<String>, error: impl Display) -> Self {
+        worker::console_error!("upstream request failed: {error}");
+        Self::BadGateway(message.into())
     }
 
     pub fn internal(error: impl Display) -> Self {
@@ -51,16 +51,12 @@ impl IntoResponse for ApiError {
         let (status, error) = match self {
             Self::BadRequest(error) => (StatusCode::BAD_REQUEST, error),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized".into()),
-            Self::Conflict(error) => (StatusCode::CONFLICT, error),
             Self::NotFound(error) => (StatusCode::NOT_FOUND, error),
             Self::Unprocessable => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 "Tenhou log could not be parsed".into(),
             ),
-            Self::BadGateway => (
-                StatusCode::BAD_GATEWAY,
-                "Tenhou log could not be fetched".into(),
-            ),
+            Self::BadGateway(error) => (StatusCode::BAD_GATEWAY, error),
             Self::Internal => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "internal server error".into(),

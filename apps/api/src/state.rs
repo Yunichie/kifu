@@ -6,6 +6,9 @@ use worker::{D1Database, Date, Env, Error, ObjectNamespace, Result};
 pub struct AppState {
     db: Arc<D1Database>,
     session_secret: Arc<[u8]>,
+    google_client_id: Arc<str>,
+    google_client_secret: Arc<str>,
+    google_redirect_uri: Arc<str>,
     tenhou_queue: ObjectNamespace,
 }
 
@@ -21,6 +24,9 @@ impl AppState {
         Ok(Self {
             db: Arc::new(env.d1("DB")?),
             session_secret: Arc::from(secret.into_bytes()),
+            google_client_id: Arc::from(env.secret("GOOGLE_CLIENT_ID")?.to_string()),
+            google_client_secret: Arc::from(env.secret("GOOGLE_CLIENT_SECRET")?.to_string()),
+            google_redirect_uri: Arc::from(env.secret("GOOGLE_REDIRECT_URI")?.to_string()),
             tenhou_queue: env.durable_object("TENHOU_QUEUE")?,
         })
     }
@@ -31,6 +37,18 @@ impl AppState {
 
     pub fn session_secret(&self) -> &[u8] {
         &self.session_secret
+    }
+
+    pub fn google_client_id(&self) -> &str {
+        &self.google_client_id
+    }
+
+    pub fn google_client_secret(&self) -> &str {
+        &self.google_client_secret
+    }
+
+    pub fn google_redirect_uri(&self) -> &str {
+        &self.google_redirect_uri
     }
 
     pub fn tenhou_queue(&self) -> &ObjectNamespace {
