@@ -1,9 +1,14 @@
 use domain::{
     stats,
-    types::{CareerStats, GameDetail, GameListItem, GameListPlayer, Ruleset},
+    types::{
+        CareerStats, GameDetail, GameListItem, GameListPage, GameListPlayer, PlayerSearchPage,
+        Ruleset,
+    },
 };
 use serde::Deserialize;
 use worker::{D1Database, D1Result, D1Type, Error, Result};
+
+pub const PAGE_SIZE: u32 = 20;
 
 #[derive(Deserialize)]
 struct DetailRow {
@@ -63,51 +68,92 @@ pub async fn exists(db: &D1Database, log_id: &str) -> Result<bool> {
         .is_some_and(|row| row.present == 1))
 }
 
-pub async fn list_all(db: &D1Database) -> Result<Vec<GameListItem>> {
+pub async fn list_all(db: &D1Database, page: u32) -> Result<GameListPage> {
+    let (limit, offset) = page_values(page);
+    let args = [D1Type::Integer(limit), D1Type::Integer(offset)];
     let result = db
         .prepare(
-            "SELECT g.log_id, g.added_at, g.ruleset_json, gp.seat, \
+            "WITH game_page AS ( \
+                 SELECT id, log_id, added_at, ruleset_json FROM games \
+                 ORDER BY added_at DESC, id DESC LIMIT ?1 OFFSET ?2 \
+             ) \
+             SELECT g.log_id, g.added_at, g.ruleset_json, gp.seat, \
                     gp.player_name, gp.final_score, gp.placement \
-             FROM games g \
+             FROM game_page g \
              LEFT JOIN game_players gp ON gp.game_id = g.id \
              ORDER BY g.added_at DESC, g.id DESC, gp.seat ASC",
-        )
-        .all()
-        .await?;
-    list_items(result)
-}
-
-pub async fn list_saved(db: &D1Database, user_id: i32) -> Result<Vec<GameListItem>> {
-    let args = [D1Type::Integer(user_id)];
-    let result = db
-        .prepare(
-            "SELECT g.log_id, g.added_at, g.ruleset_json, gp.seat, \
-                    gp.player_name, gp.final_score, gp.placement \
-             FROM user_saved_games usg \
-             JOIN games g ON g.id = usg.game_id \
-             LEFT JOIN game_players gp ON gp.game_id = g.id \
-             WHERE usg.user_id = ?1 \
-             ORDER BY usg.saved_at DESC, g.id DESC, gp.seat ASC",
         )
         .bind_refs(&args)?
         .all()
         .await?;
-    list_items(result)
+    game_page(result, page)
 }
 
-pub async fn list_players(db: &D1Database) -> Result<Vec<String>> {
+pub async fn list_saved(db: &D1Database, user_id: i32, page: u32) -> Result<GameListPage> {
+    let (limit, offset) = page_values(page);
+    let args = [
+        D1Type::Integer(user_id),
+        D1Type::Integer(limit),
+        D1Type::Integer(offset),
+    ];
+    let result = db
+        .prepare(
+            "WITH game_page AS ( \
+                 SELECT g.id, g.log_id, g.added_at, g.ruleset_json, usg.saved_at \
+                 FROM user_saved_games usg JOIN games g ON g.id = usg.game_id \
+                 WHERE usg.user_id = ?1 \
+                 ORDER BY usg.saved_at DESC, g.id DESC LIMIT ?2 OFFSET ?3 \
+             ) \
+             SELECT g.log_id, g.added_at, g.ruleset_json, gp.seat, \
+                    gp.player_name, gp.final_score, gp.placement \
+             FROM game_page g \
+             LEFT JOIN game_players gp ON gp.game_id = g.id \
+             ORDER BY g.saved_at DESC, g.id DESC, gp.seat ASC",
+        )
+        .bind_refs(&args)?
+        .all()
+        .await?;
+    game_page(result, page)
+}
+
+pub async fn search_players(db: &D1Database, query: &str, page: u32) -> Result<PlayerSearchPage> {
+    if query.is_empty() {
+        return Ok(PlayerSearchPage {
+            items: Vec::new(),
+            page,
+            has_next: false,
+        });
+    }
+
+    let (limit, offset) = page_values(page);
+    let pattern = like_prefix(query);
+    let args = [
+        D1Type::Text(&pattern),
+        D1Type::Integer(limit),
+        D1Type::Integer(offset),
+    ];
     let result = db
         .prepare(
             "SELECT DISTINCT player_name FROM game_players \
-             ORDER BY player_name COLLATE NOCASE, player_name",
+             WHERE player_name LIKE ?1 ESCAPE '\\' COLLATE NOCASE \
+             ORDER BY player_name COLLATE NOCASE, player_name \
+             LIMIT ?2 OFFSET ?3",
         )
+        .bind_refs(&args)?
         .all()
         .await?;
-    Ok(result
+    let mut items = result
         .results::<PlayerNameRow>()?
         .into_iter()
         .map(|row| row.player_name)
-        .collect())
+        .collect::<Vec<_>>();
+    let has_next = items.len() > PAGE_SIZE as usize;
+    items.truncate(PAGE_SIZE as usize);
+    Ok(PlayerSearchPage {
+        items,
+        page,
+        has_next,
+    })
 }
 
 pub async fn persist_and_save(
@@ -294,6 +340,34 @@ fn list_items(result: D1Result) -> Result<Vec<GameListItem>> {
     Ok(games)
 }
 
+fn game_page(result: D1Result, page: u32) -> Result<GameListPage> {
+    let mut items = list_items(result)?;
+    let has_next = items.len() > PAGE_SIZE as usize;
+    items.truncate(PAGE_SIZE as usize);
+    Ok(GameListPage {
+        items,
+        page,
+        has_next,
+    })
+}
+
+fn page_values(page: u32) -> (i32, i32) {
+    let offset = (page.saturating_sub(1) * PAGE_SIZE) as i32;
+    ((PAGE_SIZE + 1) as i32, offset)
+}
+
+fn like_prefix(query: &str) -> String {
+    let mut pattern = String::with_capacity(query.len() + 1);
+    for character in query.chars() {
+        if matches!(character, '\\' | '%' | '_') {
+            pattern.push('\\');
+        }
+        pattern.push(character);
+    }
+    pattern.push('%');
+    pattern
+}
+
 fn deserialize<T: serde::de::DeserializeOwned>(json: &str) -> Result<T> {
     serde_json::from_str(json).map_err(data_error)
 }
@@ -312,4 +386,15 @@ fn nonnegative(value: i32) -> u32 {
 
 fn data_error(error: impl std::fmt::Display) -> Error {
     Error::RustError(format!("invalid game data: {error}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::like_prefix;
+
+    #[test]
+    fn escapes_like_metacharacters_in_player_prefixes() {
+        assert_eq!(like_prefix("a%b_c\\d"), "a\\%b\\_c\\\\d%");
+        assert_eq!(like_prefix("\u{77f3}\u{6a4b}"), "\u{77f3}\u{6a4b}%");
+    }
 }

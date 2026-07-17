@@ -1,16 +1,24 @@
-import type { AddGameInput, GameDetail, GameListItem } from '@kifu/api-types';
+import type { AddGameInput, GameDetail, GameListPage, PlayerSearchPage } from '@kifu/api-types';
 import { fail, redirect } from '@sveltejs/kit';
 import { ApiError, apiRequest } from '$lib/api/client';
+import { pageParam, playerQuery } from '$lib/query';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
   const { me } = await event.parent();
   const view = me && event.url.searchParams.get('view') !== 'all' ? 'library' : 'all';
-  const [games, players] = await Promise.all([
-    apiRequest<GameListItem[]>(event, view === 'library' ? '/api/me/library' : '/api/games'),
-    apiRequest<string[]>(event, '/api/players')
+  const page = pageParam(event.url.searchParams.get('page'));
+  const query = playerQuery(event.url.searchParams.get('q'));
+  const playerPage = pageParam(event.url.searchParams.get('playerPage'));
+  const gamePath = view === 'library' ? '/api/me/library' : '/api/games';
+  const [games, playerResults] = await Promise.all([
+    apiRequest<GameListPage>(event, `${gamePath}?page=${page}`),
+    apiRequest<PlayerSearchPage>(
+      event,
+      `/api/players?${new URLSearchParams({ q: query, page: String(playerPage) })}`
+    )
   ]);
-  return { games, players, view };
+  return { games, playerResults, query, view };
 };
 
 export const actions = {

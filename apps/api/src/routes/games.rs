@@ -1,10 +1,11 @@
 use axum::{
     Json, Router,
-    extract::{Path, State, rejection::JsonRejection},
+    extract::{Path, Query, State, rejection::JsonRejection},
     http::StatusCode,
     routing::get,
 };
-use domain::types::{AddGameInput, GameDetail, GameListItem};
+use domain::types::{AddGameInput, GameDetail, GameListPage};
+use serde::Deserialize;
 
 use crate::{
     auth::middleware::AuthedUser,
@@ -20,10 +21,19 @@ pub fn router() -> Router<AppState> {
         .route("/api/games/{id}", get(detail).delete(remove))
 }
 
+#[derive(Default, Deserialize)]
+struct PaginationQuery {
+    page: Option<u32>,
+}
+
 #[worker::send]
-async fn list(State(state): State<AppState>) -> Result<Json<Vec<GameListItem>>, ApiError> {
+async fn list(
+    State(state): State<AppState>,
+    Query(query): Query<PaginationQuery>,
+) -> Result<Json<GameListPage>, ApiError> {
+    let page = super::valid_page(query.page)?;
     Ok(Json(
-        games::list_all(state.db())
+        games::list_all(state.db(), page)
             .await
             .map_err(ApiError::internal)?,
     ))

@@ -1,6 +1,7 @@
 <script lang="ts">
   import Users from 'lucide-svelte/icons/users';
   import CareerView from '$lib/components/CareerView.svelte';
+  import PlayerSearch from '$lib/components/PlayerSearch.svelte';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
@@ -27,17 +28,6 @@
       <Users size={18} strokeWidth={1.75} class="text-text-secondary" aria-hidden="true" />
       <h2 class="text-[15px] leading-[21px] font-semibold">Players in the ledger</h2>
     </div>
-    {#if data.players.length > 0}
-      <div class="flex flex-wrap gap-2">
-        {#each data.players as player (player)}
-          <a
-            class="stamp-tag transition-colors duration-fast hover:border-gold hover:text-gold"
-            href={`/career/${encodeURIComponent(player)}`}>{player}</a
-          >
-        {/each}
-      </div>
-    {:else}
-      <p class="text-[13px] leading-[19px] text-text-tertiary">Players appear after a log is added.</p>
-    {/if}
+    <PlayerSearch query={data.query} results={data.playerResults!} basePath="/career" />
   </section>
 {/if}

@@ -1,9 +1,10 @@
 use axum::{
     Json, Router,
-    extract::{Path, State, rejection::JsonRejection},
+    extract::{Path, Query, State, rejection::JsonRejection},
     routing::{delete, get, post},
 };
-use domain::types::{CareerStats, GameListItem, MeResponse, PlayerNameInput, PlayerNamesResponse};
+use domain::types::{CareerStats, GameListPage, MeResponse, PlayerNameInput, PlayerNamesResponse};
+use serde::Deserialize;
 
 use crate::{
     auth::middleware::AuthedUser,
@@ -19,6 +20,11 @@ pub fn router() -> Router<AppState> {
         .route("/api/me/library", get(library))
         .route("/api/me/player-names", post(add_player_name))
         .route("/api/me/player-names/{name}", delete(remove_player_name))
+}
+
+#[derive(Default, Deserialize)]
+struct PaginationQuery {
+    page: Option<u32>,
 }
 
 #[worker::send]
@@ -40,9 +46,11 @@ async fn career(
 async fn library(
     State(state): State<AppState>,
     user: AuthedUser,
-) -> Result<Json<Vec<GameListItem>>, ApiError> {
+    Query(query): Query<PaginationQuery>,
+) -> Result<Json<GameListPage>, ApiError> {
+    let page = super::valid_page(query.page)?;
     Ok(Json(
-        games::list_saved(state.db(), user.id)
+        games::list_saved(state.db(), user.id, page)
             .await
             .map_err(ApiError::internal)?,
     ))

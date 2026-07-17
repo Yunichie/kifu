@@ -1,9 +1,10 @@
 use axum::{
     Json, Router,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::get,
 };
-use domain::types::CareerStats;
+use domain::types::{CareerStats, PlayerSearchPage};
+use serde::Deserialize;
 
 use crate::{db::games, error::ApiError, state::AppState};
 
@@ -13,10 +14,25 @@ pub fn router() -> Router<AppState> {
         .route("/api/players/{name}/career", get(career))
 }
 
+#[derive(Default, Deserialize)]
+struct PlayerSearchQuery {
+    q: Option<String>,
+    page: Option<u32>,
+}
+
 #[worker::send]
-async fn list(State(state): State<AppState>) -> Result<Json<Vec<String>>, ApiError> {
+async fn list(
+    State(state): State<AppState>,
+    Query(search): Query<PlayerSearchQuery>,
+) -> Result<Json<PlayerSearchPage>, ApiError> {
+    let query = search.q.unwrap_or_default();
+    let query = query.trim();
+    if query.chars().count() > 64 || query.chars().any(char::is_control) {
+        return Err(ApiError::bad_request("invalid player search"));
+    }
+    let page = super::valid_page(search.page)?;
     Ok(Json(
-        games::list_players(state.db())
+        games::search_players(state.db(), query, page)
             .await
             .map_err(ApiError::internal)?,
     ))

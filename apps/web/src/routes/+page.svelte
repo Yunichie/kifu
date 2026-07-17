@@ -4,9 +4,21 @@
   import Plus from 'lucide-svelte/icons/plus';
   import Users from 'lucide-svelte/icons/users';
   import GameList from '$lib/components/GameList.svelte';
+  import Pagination from '$lib/components/Pagination.svelte';
+  import PlayerSearch from '$lib/components/PlayerSearch.svelte';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
+
+  function homeHref(gamePage: number, playerPage: number, view = data.view): string {
+    const params = new URLSearchParams();
+    if (view === 'all') params.set('view', 'all');
+    if (gamePage > 1) params.set('page', String(gamePage));
+    if (data.query) params.set('q', data.query);
+    if (playerPage > 1) params.set('playerPage', String(playerPage));
+    const query = params.toString();
+    return query ? `/?${query}` : '/';
+  }
 </script>
 
 <svelte:head>
@@ -53,20 +65,30 @@
     <h2 class="pb-3 font-display text-xl leading-[26px] font-semibold">Game ledger</h2>
     <nav class="flex self-stretch" aria-label="Game list">
       {#if data.me}
-        <a class="nav-link px-3" href="/" aria-current={data.view === 'library' ? 'page' : undefined}
+        <a
+          class="nav-link px-3"
+          href={homeHref(1, data.playerResults.page, 'library')}
+          aria-current={data.view === 'library' ? 'page' : undefined}
           >Library</a
         >
       {/if}
       <a
         class="nav-link px-3"
-        href="/?view=all"
+        href={homeHref(1, data.playerResults.page, 'all')}
         aria-current={data.view === 'all' ? 'page' : undefined}>All games</a
       >
     </nav>
   </div>
 
-  {#if data.games.length > 0}
-    <GameList games={data.games} removable={data.view === 'library'} />
+  {#if data.games.items.length > 0}
+    <GameList games={data.games.items} removable={data.view === 'library'} />
+    <Pagination
+      page={data.games.page}
+      hasNext={data.games.hasNext}
+      previousHref={homeHref(data.games.page - 1, data.playerResults.page)}
+      nextHref={homeHref(data.games.page + 1, data.playerResults.page)}
+      label="Game ledger pages"
+    />
   {:else}
     <div class="flex min-h-40 flex-col items-center justify-center gap-3 text-center text-text-tertiary">
       <span class="empty-tile" aria-hidden="true"><i></i></span>
@@ -87,22 +109,16 @@
     <Users size={18} strokeWidth={1.75} class="text-gold" aria-hidden="true" />
     <h2 class="font-display text-xl leading-[26px] font-semibold">Players</h2>
   </div>
-  {#if data.players.length > 0}
-    <div class="flex flex-wrap gap-2">
-      {#each data.players as player (player)}
-        <a
-          class="stamp-tag gap-1.5 transition-colors duration-fast hover:border-gold hover:text-gold"
-          href={`/career/${encodeURIComponent(player)}`}><span class="suit-bullet" lang="ja">萬</span>{player}</a
-        >
-      {/each}
-    </div>
-  {:else}
-    <p class="text-[13px] leading-[19px] text-text-tertiary">Players appear after a log is added.</p>
-  {/if}
+  <PlayerSearch
+    query={data.query}
+    results={data.playerResults}
+    basePath="/"
+    pageParam="playerPage"
+    preservedParams={{ view: data.view, page: data.games.page }}
+  />
 </section>
 
 <style>
   .empty-tile { display: grid; width: 30px; height: 42px; place-items: center; border: 2px solid color-mix(in srgb, var(--kinari) 42%, transparent); border-radius: 4px; background: var(--surface-3); opacity: 0.48; transform: rotate(-5deg); }
   .empty-tile i { width: 14px; height: 14px; border: 1px solid var(--gold); border-radius: 50%; }
-  .suit-bullet { color: var(--shu); font-family: "Shippori Mincho", serif; font-size: 12px; }
 </style>
