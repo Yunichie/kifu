@@ -6,16 +6,16 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
 pub struct User {
     pub id: i32,
-    pub username: String,
+    pub display_name: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
 #[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
-pub struct AuthCredentials {
-    pub username: String,
-    pub password: String,
+pub struct OAuthExchangeInput {
+    pub code: String,
+    pub code_verifier: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -76,6 +76,26 @@ pub struct GameListItem {
     pub added_at: f64,
     pub rules: Ruleset,
     pub players: Vec<GameListPlayer>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
+pub struct GameListPage {
+    pub items: Vec<GameListItem>,
+    pub page: u32,
+    pub has_next: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
+pub struct PlayerSearchPage {
+    pub items: Vec<String>,
+    pub page: u32,
+    pub has_next: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]

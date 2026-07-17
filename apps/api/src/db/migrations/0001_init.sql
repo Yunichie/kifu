@@ -20,13 +20,15 @@ CREATE TABLE game_players (
   PRIMARY KEY (game_id, seat)
 );
 
-CREATE INDEX idx_game_players_name ON game_players(player_name);
+CREATE INDEX idx_game_players_name ON game_players(player_name COLLATE NOCASE);
 
 CREATE TABLE users (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  username      TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  created_at    INTEGER NOT NULL
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  provider         TEXT NOT NULL,
+  provider_subject TEXT NOT NULL,
+  display_name     TEXT NOT NULL,
+  created_at       INTEGER NOT NULL,
+  UNIQUE (provider, provider_subject)
 );
 
 CREATE TABLE user_player_names (
