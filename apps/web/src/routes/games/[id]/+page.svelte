@@ -1,18 +1,14 @@
 <script lang="ts">
   import ChartCard from '$lib/components/ChartCard.svelte';
   import DealInMatrix from '$lib/components/DealInMatrix.svelte';
+  import HandScoreChart from '$lib/components/HandScoreChart.svelte';
   import { formatPercent, formatScore, formatSigned, resultLabel, roundLabel } from '$lib/format';
+  import { buildHandLedger } from '$lib/handLedger';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
   const seatBorders = ['border-l-man', 'border-l-pin', 'border-l-sou', 'border-l-gold'];
-  let finalScores = $derived(
-    data.game.players.toSorted((a, b) => a.seat - b.seat).map((player) => player.finalScore ?? 0)
-  );
-  let terminalSettlement = $derived(
-    data.game.kyoku.length > 0 &&
-    finalScores.some((score, seat) => score !== data.game.kyoku.at(-1)?.endScores[seat])
-  );
+  let handLedger = $derived(buildHandLedger(data.game));
 </script>
 
 <svelte:head>
@@ -45,7 +41,10 @@
 
 <section class="mb-8">
   <h2 class="mb-3 font-display text-xl leading-[26px] font-semibold">Hand ledger</h2>
-  <div class="table-shell">
+  <ChartCard title="Score progression">
+    <HandScoreChart chart={handLedger.chart} />
+  </ChartCard>
+  <div class="table-shell mt-4">
     <table class="ledger">
       <thead>
         <tr>
@@ -68,11 +67,11 @@
               </td>
             {/each}
           </tr>
-          {#if index === data.game.kyoku.length - 1 && terminalSettlement}
+          {#if index === data.game.kyoku.length - 1 && handLedger.terminalSettlement}
             <tr class="border-l-[3px] border-l-gold">
               <td>Final</td>
               <td class="font-sans">Final settlement</td>
-              {#each finalScores as score, seat (seat)}
+              {#each handLedger.finalScores as score, seat (seat)}
                 <td>
                   {formatScore(score)}
                   <span class={score - kyoku.endScores[seat] < 0 ? 'text-man' : 'text-sou'}>
