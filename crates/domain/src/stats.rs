@@ -317,7 +317,8 @@ pub fn aggregate_career(games: &[GameDetail], player_names: &[String]) -> Career
     CareerStats {
         player_names: player_names.to_vec(),
         games: relevant.len() as u32,
-        average_placement: (placement_count > 0).then(|| f64::from(placement_total) / f64::from(placement_count)),
+        average_placement: (placement_count > 0)
+            .then(|| f64::from(placement_total) / f64::from(placement_count)),
         stats: accumulator.finish(),
         placement_distribution: into_buckets(placements),
         score_trend,
