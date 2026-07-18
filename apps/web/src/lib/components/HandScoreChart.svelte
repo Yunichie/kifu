@@ -126,7 +126,7 @@
 
   .axis-label {
     fill: var(--text-tertiary);
-    font-family: "JetBrains Mono", monospace;
+    font-family: "Roboto Mono", "BIZ UDPGothic", monospace;
     font-size: 10px;
   }
 
