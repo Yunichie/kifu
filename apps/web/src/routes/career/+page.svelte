@@ -20,13 +20,13 @@
   />
 {:else}
   <header class="mb-6">
-    <p class="section-kicker">Career</p>
-    <h1 class="mt-1 font-display text-xl leading-[26px] font-semibold">Browse player records</h1>
+    <p class="section-kicker">Career records</p>
+    <h1 class="mt-1 font-display text-[28px] leading-[34px] font-bold">Browse players</h1>
   </header>
   <section class="panel">
-    <div class="mb-4 flex items-center gap-2">
-      <Users size={18} strokeWidth={1.75} class="text-text-secondary" aria-hidden="true" />
-      <h2 class="text-[15px] leading-[21px] font-semibold">Players in the ledger</h2>
+    <div class="mb-4 flex items-center gap-3">
+      <span class="grid size-9 place-items-center rounded-md bg-surface-2 text-pin"><Users size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+      <h2 class="font-display text-[18px] leading-6 font-bold">Players in the ledger</h2>
     </div>
     <PlayerSearch query={data.query} results={data.playerResults!} basePath="/career" />
   </section>
