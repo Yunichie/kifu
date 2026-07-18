@@ -52,10 +52,10 @@
 
 {#if query}
   {#if results.items.length > 0}
-    <div class="mt-5 flex flex-wrap gap-2">
+    <div class="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
       {#each results.items as player (player)}
         <a
-          class="stamp-tag transition-colors duration-fast hover:border-gold hover:text-gold"
+          class="inline-flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md border border-border-subtle bg-surface-2 px-3 text-[12px] font-bold text-text-primary transition-colors duration-fast hover:border-gold"
           href={`/career/${encodeURIComponent(player)}`}>{player}</a
         >
       {/each}

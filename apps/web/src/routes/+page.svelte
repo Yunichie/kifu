@@ -1,5 +1,6 @@
 <script lang="ts">
   import CircleAlert from 'lucide-svelte/icons/circle-alert';
+  import FilePlus2 from 'lucide-svelte/icons/file-plus-2';
   import LogIn from 'lucide-svelte/icons/log-in';
   import Plus from 'lucide-svelte/icons/plus';
   import Users from 'lucide-svelte/icons/users';
@@ -26,8 +27,16 @@
   <meta name="description" content="Tenhou game records and riichi career statistics" />
 </svelte:head>
 
-<section id="add-log" class="panel mb-8">
-  <h1 class="mb-3 text-[15px] leading-[21px] font-semibold">Add a Tenhou log</h1>
+<header class="mb-5 sm:mb-6">
+  <p class="section-kicker">Tenhou records</p>
+  <h1 class="mt-1 font-display text-[28px] leading-[34px] font-bold">Game ledger</h1>
+</header>
+
+<section id="add-log" class="add-log panel mb-8">
+  <div class="mb-4 flex items-center gap-3">
+    <span class="add-icon" aria-hidden="true"><FilePlus2 size={20} strokeWidth={1.6} /></span>
+    <h2 class="font-display text-[18px] leading-6 font-bold">Add a Tenhou log</h2>
+  </div>
   {#if form?.message}
     <div class="status-error mb-4" role="alert">
       <CircleAlert class="mt-0.5 shrink-0" size={16} strokeWidth={1.75} aria-hidden="true" />
@@ -54,29 +63,28 @@
     {:else}
       <a class="button-primary self-end" href="/login">
         <LogIn size={16} strokeWidth={1.75} aria-hidden="true" />
-        Log in to add a log
+        Log in to add
       </a>
     {/if}
   </form>
 </section>
 
-<section class="mb-8">
-  <div class="mb-4 flex items-end justify-between gap-4 border-b border-border-subtle">
-    <h2 class="pb-3 font-display text-xl leading-[26px] font-semibold">Game ledger</h2>
-    <nav class="flex self-stretch" aria-label="Game list">
+<section class="mb-10">
+  <div class="mb-4 flex items-end justify-between gap-3 border-b border-border-subtle">
+    <h2 class="pb-3 font-display text-[20px] leading-7 font-bold">Saved games</h2>
+    <nav class="flex min-w-0 self-stretch" aria-label="Game list">
       {#if data.me}
         <a
-          class="nav-link px-3"
+          class="nav-link px-2.5 sm:px-3.5"
           href={homeHref(1, data.playerResults.page, 'library')}
           aria-current={data.view === 'library' ? 'page' : undefined}
-          >Library</a
-        >
+        >Library</a>
       {/if}
       <a
-        class="nav-link px-3"
+        class="nav-link px-2.5 sm:px-3.5"
         href={homeHref(1, data.playerResults.page, 'all')}
-        aria-current={data.view === 'all' ? 'page' : undefined}>All games</a
-      >
+        aria-current={data.view === 'all' ? 'page' : undefined}
+      >All games</a>
     </nav>
   </div>
 
@@ -90,11 +98,9 @@
       label="Game ledger pages"
     />
   {:else}
-    <div class="flex min-h-40 flex-col items-center justify-center gap-3 text-center text-text-tertiary">
-      <span class="empty-tile" aria-hidden="true"><i></i></span>
-      <p class="text-[13px] leading-[19px]">
-        {data.view === 'library' ? 'No logs saved yet.' : 'No logs added yet.'}
-      </p>
+    <div class="empty-state">
+      <span class="empty-plaque" aria-hidden="true"><i></i></span>
+      <p>{data.view === 'library' ? 'No logs saved yet.' : 'No logs added yet.'}</p>
       {#if data.me}
         <a class="button-primary" href="#add-log">Add your first log</a>
       {:else}
@@ -104,10 +110,10 @@
   {/if}
 </section>
 
-<section>
-  <div class="mb-4 flex items-center gap-2">
-    <Users size={18} strokeWidth={1.75} class="text-gold" aria-hidden="true" />
-    <h2 class="font-display text-xl leading-[26px] font-semibold">Players</h2>
+<section class="player-search panel">
+  <div class="mb-4 flex items-center gap-3">
+    <span class="search-icon" aria-hidden="true"><Users size={18} strokeWidth={1.75} /></span>
+    <h2 class="font-display text-[20px] leading-7 font-bold">Players</h2>
   </div>
   <PlayerSearch
     query={data.query}
@@ -119,6 +125,11 @@
 </section>
 
 <style>
-  .empty-tile { display: grid; width: 30px; height: 42px; place-items: center; border: 2px solid color-mix(in srgb, var(--kinari) 42%, transparent); border-radius: 4px; background: var(--surface-3); opacity: 0.48; transform: rotate(-5deg); }
-  .empty-tile i { width: 14px; height: 14px; border: 1px solid var(--gold); border-radius: 50%; }
+  .add-log { position: relative; overflow: hidden; }
+  .add-log::before { position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--gold); content: ''; }
+  .add-icon, .search-icon { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border-radius: 6px; background: var(--surface-2); color: var(--gold); }
+  .search-icon { color: var(--pin); }
+  .empty-state { display: flex; min-height: 220px; flex-direction: column; align-items: center; justify-content: center; gap: 14px; border: 1px dashed var(--border-default); border-radius: 6px; color: var(--text-tertiary); text-align: center; }
+  .empty-plaque { display: grid; width: 34px; height: 48px; place-items: center; border: 1px solid var(--tile-edge); border-radius: 5px; background: linear-gradient(var(--tile-highlight), var(--tile-bg)); box-shadow: 0 3px 0 var(--tile-edge); transform: rotate(-3deg); }
+  .empty-plaque i { width: 13px; height: 3px; border-radius: 2px; background: var(--gold); }
 </style>
