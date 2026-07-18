@@ -1,4 +1,9 @@
 {
-  "name": "kifu-web",
-  "pages_build_output_dir": ".svelte-kit/cloudflare"
+  "name": "kifu-app",
+  "pages_build_output_dir": ".svelte-kit/cloudflare",
+  "compatibility_date": "2026-07-18",
+  "vars": {
+    "PUBLIC_API_BASE_URL": "https://kifu-api.alfarelsandriano.workers.dev",
+    "PUBLIC_GOOGLE_CLIENT_ID": "655157272461-1rnuv52duem7mmh0knbd844g1bcpi6r3.apps.googleusercontent.com"
+  }
 }

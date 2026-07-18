@@ -4,9 +4,9 @@
   "compatibility_date": "2026-07-01",
   "d1_databases": [
     {
-      "binding": "DB",
+      "binding": "kifu",
       "database_name": "kifu",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "dc1ffd0b-3fab-4c8f-9c34-e36a4de22e4e",
       "migrations_dir": "src/db/migrations"
     }
   ],
@@ -21,7 +21,17 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["TenhouQueueDO"]
+      "new_sqlite_classes": [
+        "TenhouQueueDO"
+      ]
     }
-  ]
+  ],
+  "secrets": {
+    "required": [
+      "SESSION_SECRET",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "GOOGLE_REDIRECT_URI"
+    ]
+  }
 }
