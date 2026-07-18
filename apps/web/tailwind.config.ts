@@ -29,23 +29,25 @@ export default {
         'gold-ink': 'var(--gold-ink)',
         tile: {
           bg: 'var(--tile-bg)',
-          text: 'var(--tile-text)'
+          text: 'var(--tile-text)',
+          edge: 'var(--tile-edge)',
+          back: 'var(--tile-back)'
         }
       },
       fontFamily: {
-        display: ['"Shippori Mincho"', '"Noto Serif JP"', 'serif'],
-        sans: ['"Noto Sans JP"', '-apple-system', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
+        display: ['"Zen Old Mincho"', '"Noto Serif JP"', 'serif'],
+        sans: ['"BIZ UDPGothic"', '"Noto Sans JP"', '-apple-system', 'sans-serif'],
+        mono: ['"Roboto Mono"', '"BIZ UDPGothic"', 'ui-monospace', 'monospace']
       },
       borderRadius: {
-        sm: '6px',
-        md: '10px',
-        lg: '16px'
+        sm: '4px',
+        md: '6px',
+        lg: '8px'
       },
       transitionDuration: {
-        fast: '120ms',
-        base: '180ms',
-        slow: '260ms'
+        fast: 'var(--motion-fast)',
+        base: 'var(--motion-base)',
+        slow: 'var(--motion-slow)'
       }
     }
   }
