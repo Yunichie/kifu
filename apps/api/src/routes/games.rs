@@ -2,6 +2,7 @@ use axum::{
     Json, Router,
     extract::{Path, Query, State, rejection::JsonRejection},
     http::StatusCode,
+    response::Response,
     routing::get,
 };
 use domain::types::{AddGameInput, GameDetail, GameListPage};
@@ -76,13 +77,13 @@ async fn add(
 async fn detail(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Result<Json<GameDetail>, ApiError> {
+) -> Result<Response, ApiError> {
     let log_id = exact_log_id(&id)?;
     let game = games::find(state.db(), &log_id)
         .await
         .map_err(ApiError::internal)?
         .ok_or_else(|| ApiError::not_found("game not found"))?;
-    Ok(Json(game))
+    Ok(super::cached_json(game, super::GAME_CACHE_CONTROL))
 }
 
 #[worker::send]

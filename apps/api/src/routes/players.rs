@@ -1,9 +1,10 @@
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
+    response::Response,
     routing::get,
 };
-use domain::types::{CareerStats, PlayerSearchPage};
+use domain::types::PlayerSearchPage;
 use serde::Deserialize;
 
 use crate::{db::games, error::ApiError, state::AppState};
@@ -42,13 +43,12 @@ async fn list(
 async fn career(
     State(state): State<AppState>,
     Path(name): Path<String>,
-) -> Result<Json<CareerStats>, ApiError> {
+) -> Result<Response, ApiError> {
     validate_player_name(&name)?;
-    Ok(Json(
-        games::career(state.db(), &[name])
-            .await
-            .map_err(ApiError::internal)?,
-    ))
+    let career = games::career(state.db(), &[name])
+        .await
+        .map_err(ApiError::internal)?;
+    Ok(super::cached_json(career, super::CAREER_CACHE_CONTROL))
 }
 
 fn validate_player_name(name: &str) -> Result<(), ApiError> {
