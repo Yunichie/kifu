@@ -1,6 +1,7 @@
 <script lang="ts">
   import { formatScore } from '$lib/format';
   import type { HandScoreChartData, HandScoreSeries } from '$lib/handLedger';
+  import { buildScoreAxis } from '$lib/scoreAxis';
 
   let { chart }: { chart: HandScoreChartData } = $props();
 
@@ -16,22 +17,15 @@
 
   let points = $derived(chart.series[0]?.points ?? []);
   let allScores = $derived(chart.series.flatMap((series) => series.points.map((point) => point.score)));
-  let minimum = $derived(allScores.length ? Math.min(...allScores) : 0);
-  let maximum = $derived(allScores.length ? Math.max(...allScores) : 0);
-  let scorePadding = $derived(Math.max(1000, (maximum - minimum) * 0.08));
-  let plotMinimum = $derived(minimum - scorePadding);
-  let plotMaximum = $derived(maximum + scorePadding);
-  let scoreRange = $derived(Math.max(1, plotMaximum - plotMinimum));
+  let scoreAxis = $derived(buildScoreAxis(allScores));
+  let scoreRange = $derived(scoreAxis.maximum - scoreAxis.minimum);
   let labelStep = $derived(Math.max(1, Math.ceil(points.length / 8)));
   let ticks = $derived(
-    Array.from({ length: 5 }, (_, index) => {
-      const ratio = index / 4;
-      return {
-        id: `tick-${index}`,
-        y: top + ratio * plotHeight,
-        score: Math.round(plotMaximum - ratio * scoreRange)
-      };
-    })
+    scoreAxis.ticks.map((score) => ({
+      id: `tick-${score}`,
+      y: top + ((scoreAxis.maximum - score) / scoreRange) * plotHeight,
+      score
+    }))
   );
 
   function color(seat: number): string {
@@ -43,7 +37,7 @@
   }
 
   function y(score: number): number {
-    return top + ((plotMaximum - score) / scoreRange) * plotHeight;
+    return top + ((scoreAxis.maximum - score) / scoreRange) * plotHeight;
   }
 
   function linePoints(series: HandScoreSeries): string {
