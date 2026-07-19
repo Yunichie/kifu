@@ -22,7 +22,7 @@ describe('hand ledger chart data', () => {
           roundIndex: 1,
           bakaze: 0,
           kyokuNumber: 2,
-          honba: 0,
+          honba: 1,
           startScores: [26000, 24000, 25000],
           endScores: [27000, 23000, 25000]
         }
@@ -33,8 +33,8 @@ describe('hand ledger chart data', () => {
     expect(ledger.chart.series.map((series) => series.name)).toEqual(['A', 'B', 'C']);
     expect(ledger.chart.series[0].points.map((point) => point.label)).toEqual([
       'Start',
-      'East 1',
-      'East 2'
+      'E1',
+      'E2:1H'
     ]);
     expect(ledger.chart.series[0].points.map((point) => point.score)).toEqual([25000, 26000, 27000]);
   });

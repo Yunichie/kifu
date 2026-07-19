@@ -1,5 +1,11 @@
 import type { GameDetail } from '@kifu/api-types';
-import { roundLabel } from '$lib/format';
+
+const chartWinds = ['E', 'S', 'W', 'N'];
+
+function chartRoundLabel(bakaze: number, kyokuNumber: number, honba: number): string {
+  const round = `${chartWinds[bakaze] ?? `R${bakaze + 1}`}${kyokuNumber}`;
+  return honba > 0 ? `${round}:${honba}H` : round;
+}
 
 type LedgerPlayer = Pick<GameDetail['players'][number], 'seat' | 'name' | 'finalScore'>;
 type LedgerHand = Pick<
@@ -36,7 +42,7 @@ export function buildHandLedger(game: { players: LedgerPlayer[]; kyoku: LedgerHa
         { id: 'start', label: 'Start', scores: game.kyoku[0].startScores },
         ...game.kyoku.map((hand) => ({
           id: `hand-${hand.roundIndex}-${hand.honba}`,
-          label: roundLabel(hand.bakaze, hand.kyokuNumber, hand.honba),
+          label: chartRoundLabel(hand.bakaze, hand.kyokuNumber, hand.honba),
           scores: hand.endScores
         })),
         ...(terminalSettlement ? [{ id: 'final', label: 'Final', scores: finalScores }] : [])

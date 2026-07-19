@@ -53,6 +53,13 @@
   function showLabel(index: number): boolean {
     return index === 0 || index === points.length - 1 || index % labelStep === 0;
   }
+
+  function labelAnchor(index: number): 'start' | 'middle' | 'end' {
+    if (points.length === 1) return 'middle';
+    if (index === 0) return 'start';
+    if (index === points.length - 1) return 'end';
+    return 'middle';
+  }
 </script>
 
 {#if points.length === 0}
@@ -81,7 +88,7 @@
 
       {#each points as point, index (point.id)}
         {#if showLabel(index)}
-          <text class="axis-label" x={x(index)} y={height - 16} text-anchor="middle">{point.label}</text>
+          <text class="axis-label" x={x(index)} y={height - 16} text-anchor={labelAnchor(index)}>{point.label}</text>
         {/if}
       {/each}
 
