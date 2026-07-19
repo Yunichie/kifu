@@ -3,9 +3,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::{
     mjlog::parser::ParsedGame,
     types::{
-        BonusStats, CallKind, CallStats, CareerStats, CountBucket, DealInMatrix, DrawReason,
-        GameDetail, KyokuResult, PlayerRates, PlayerStats, PlayerSummary, ScoreTrendPoint,
-        TurnEvent, WinResult, YakuCount,
+        BonusStats, CallKind, CallStats, CareerGameInput, CareerStats, CountBucket, DealInMatrix,
+        DrawReason, GameDetail, KyokuResult, PlayerRates, PlayerStats, PlayerSummary,
+        ScoreTrendPoint, TurnEvent, WinResult, YakuCount,
     },
 };
 
@@ -251,7 +251,7 @@ pub fn summarize_game(log_id: String, parsed: ParsedGame) -> GameDetail {
     }
 }
 
-pub fn aggregate_career(games: &[GameDetail], player_names: &[String]) -> CareerStats {
+pub fn aggregate_career(games: &[CareerGameInput], player_names: &[String]) -> CareerStats {
     let selected = player_names
         .iter()
         .map(String::as_str)

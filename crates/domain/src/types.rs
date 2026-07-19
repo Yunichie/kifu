@@ -383,6 +383,13 @@ pub struct DealInMatrix {
     pub counts: Vec<Vec<u32>>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct CareerGameInput {
+    pub log_id: String,
+    pub players: Vec<PlayerSummary>,
+    pub deal_in_matrix: DealInMatrix,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]

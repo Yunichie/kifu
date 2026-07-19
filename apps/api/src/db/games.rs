@@ -1,8 +1,8 @@
 use domain::{
     stats,
     types::{
-        CareerStats, GameDetail, GameListItem, GameListPage, GameListPlayer, PlayerSearchPage,
-        Ruleset,
+        CareerGameInput, CareerStats, DealInMatrix, GameDetail, GameListItem, GameListPage,
+        GameListPlayer, PlayerSearchPage, PlayerSummary, Ruleset,
     },
 };
 use serde::Deserialize;
@@ -36,15 +36,11 @@ struct PlayerNameRow {
     player_name: String,
 }
 
-#[derive(Default, Deserialize)]
-struct CareerAggregateRow {
-    games: i32,
-    hands: i32,
-    wins: i32,
-    riichi: i32,
-    deal_ins: i32,
-    calls: i32,
-    average_placement: Option<f64>,
+#[derive(Deserialize)]
+struct CareerDetailRow {
+    log_id: String,
+    player_json: String,
+    deal_in_matrix_json: String,
 }
 
 pub async fn find(db: &D1Database, log_id: &str) -> Result<Option<GameDetail>> {
@@ -265,47 +261,40 @@ pub async fn career(db: &D1Database, player_names: &[String]) -> Result<CareerSt
         .iter()
         .map(|name| D1Type::Text(name))
         .collect::<Vec<_>>();
-    let aggregate = db
+    let rows = db
         .prepare(format!(
-            "SELECT COUNT(DISTINCT game_id) AS games, \
-                    COALESCE(SUM(hands), 0) AS hands, \
-                    COALESCE(SUM(wins), 0) AS wins, \
-                    COALESCE(SUM(riichi), 0) AS riichi, \
-                    COALESCE(SUM(deal_ins), 0) AS deal_ins, \
-                    COALESCE(SUM(calls), 0) AS calls, \
-                    AVG(placement) AS average_placement \
-             FROM game_players WHERE player_name IN ({placeholders})"
-        ))
-        .bind_refs(&args)?
-        .first::<CareerAggregateRow>(None)
-        .await?
-        .unwrap_or_default();
-    let detail_rows = db
-        .prepare(format!(
-            "SELECT g.detail_json FROM games g \
-             WHERE EXISTS ( \
-                 SELECT 1 FROM game_players gp \
-                 WHERE gp.game_id = g.id AND gp.player_name IN ({placeholders}) \
-             ) ORDER BY g.added_at ASC"
+            "SELECT g.log_id, player.value AS player_json, \
+                    json_extract(g.detail_json, '$.dealInMatrix') AS deal_in_matrix_json \
+             FROM game_players gp \
+             JOIN games g ON g.id = gp.game_id \
+             JOIN json_each(g.detail_json, '$.players') player \
+               ON CAST(json_extract(player.value, '$.seat') AS INTEGER) = gp.seat \
+             WHERE gp.player_name IN ({placeholders}) \
+             ORDER BY g.added_at ASC, g.id ASC, gp.seat ASC"
         ))
         .bind_refs(&args)?
         .all()
         .await?
-        .results::<DetailRow>()?;
-    let details = detail_rows
-        .into_iter()
-        .map(|row| deserialize(&row.detail_json))
-        .collect::<Result<Vec<GameDetail>>>()?;
-    let mut career = stats::aggregate_career(&details, player_names);
+        .results::<CareerDetailRow>()?;
+    let games = career_inputs(rows)?;
+    Ok(stats::aggregate_career(&games, player_names))
+}
 
-    career.games = nonnegative(aggregate.games);
-    career.average_placement = aggregate.average_placement;
-    career.stats.hands = nonnegative(aggregate.hands);
-    career.stats.wins = nonnegative(aggregate.wins);
-    career.stats.riichi = nonnegative(aggregate.riichi);
-    career.stats.deal_ins = nonnegative(aggregate.deal_ins);
-    career.stats.calls.total = nonnegative(aggregate.calls);
-    Ok(career)
+fn career_inputs(rows: Vec<CareerDetailRow>) -> Result<Vec<CareerGameInput>> {
+    let mut games: Vec<CareerGameInput> = Vec::new();
+    for row in rows {
+        let player = deserialize::<PlayerSummary>(&row.player_json)?;
+        if let Some(game) = games.last_mut().filter(|game| game.log_id == row.log_id) {
+            game.players.push(player);
+        } else {
+            games.push(CareerGameInput {
+                log_id: row.log_id,
+                players: vec![player],
+                deal_in_matrix: deserialize::<DealInMatrix>(&row.deal_in_matrix_json)?,
+            });
+        }
+    }
+    Ok(games)
 }
 
 fn list_items(result: D1Result) -> Result<Vec<GameListItem>> {
@@ -380,21 +369,43 @@ fn as_i32(value: u32) -> Result<i32> {
     i32::try_from(value).map_err(data_error)
 }
 
-fn nonnegative(value: i32) -> u32 {
-    value.max(0) as u32
-}
-
 fn data_error(error: impl std::fmt::Display) -> Error {
     Error::RustError(format!("invalid game data: {error}"))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::like_prefix;
+    use super::{CareerDetailRow, career_inputs, like_prefix};
+
+    const LOG_ID: &str = "2017010100gm-00a9-0000-003dbd5d";
+    const XML: &str = include_str!(
+        "../../../../crates/domain/tests/fixtures/2017010100gm-00a9-0000-003dbd5d.xml"
+    );
 
     #[test]
     fn escapes_like_metacharacters_in_player_prefixes() {
         assert_eq!(like_prefix("a%b_c\\d"), "a\\%b\\_c\\\\d%");
         assert_eq!(like_prefix("\u{77f3}\u{6a4b}"), "\u{77f3}\u{6a4b}%");
+    }
+
+    #[test]
+    fn groups_projected_players_once_per_game() {
+        let detail = domain::parse_game(LOG_ID, XML).expect("real fixture should parse");
+        let matrix_json =
+            serde_json::to_string(&detail.deal_in_matrix).expect("matrix should serialize");
+        let rows = detail.players[..2]
+            .iter()
+            .map(|player| CareerDetailRow {
+                log_id: detail.log_id.clone(),
+                player_json: serde_json::to_string(player).expect("player should serialize"),
+                deal_in_matrix_json: matrix_json.clone(),
+            })
+            .collect();
+
+        let games = career_inputs(rows).expect("projected rows should deserialize");
+
+        assert_eq!(games.len(), 1);
+        assert_eq!(games[0].players, detail.players[..2]);
+        assert_eq!(games[0].deal_in_matrix, detail.deal_in_matrix);
     }
 }

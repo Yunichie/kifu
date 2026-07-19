@@ -1,7 +1,7 @@
 use domain::{
     parse_game,
     stats::aggregate_career,
-    types::{CountBucket, KyokuResult, PlayerSummary, TurnEvent},
+    types::{CareerGameInput, CountBucket, KyokuResult, PlayerSummary, TurnEvent},
 };
 
 const LOG_ID: &str = "2017010100gm-00a9-0000-003dbd5d";
@@ -210,7 +210,12 @@ fn computes_every_required_game_stat_from_the_fixture() {
 #[test]
 fn aggregates_career_stats_and_serializes_the_domain_contract() {
     let detail = fixture();
-    let career = aggregate_career(std::slice::from_ref(&detail), &["CLS".to_owned()]);
+    let career_input = CareerGameInput {
+        log_id: detail.log_id.clone(),
+        players: detail.players.clone(),
+        deal_in_matrix: detail.deal_in_matrix.clone(),
+    };
+    let career = aggregate_career(&[career_input], &["CLS".to_owned()]);
 
     assert_eq!(career.games, 1);
     assert_eq!(career.average_placement, Some(2.0));
@@ -228,4 +233,49 @@ fn aggregates_career_stats_and_serializes_the_domain_contract() {
     assert_eq!(json["logId"], LOG_ID);
     assert_eq!(json["kyoku"][0]["events"][0]["type"], "Draw");
     assert_eq!(json["players"][1]["stats"]["wins"], 3);
+}
+
+#[test]
+fn aggregates_multiple_selected_players_once_per_game() {
+    let detail = fixture();
+    let selected = vec![
+        detail.players[0].name.clone(),
+        detail.players[1].name.clone(),
+    ];
+    let expected_hands = detail.players[0].stats.hands + detail.players[1].stats.hands;
+    let career_input = CareerGameInput {
+        log_id: detail.log_id,
+        players: detail.players[..2].to_vec(),
+        deal_in_matrix: detail.deal_in_matrix,
+    };
+
+    let career = aggregate_career(&[career_input], &selected);
+
+    assert_eq!(career.games, 1);
+    assert_eq!(career.stats.hands, expected_hands);
+    assert_eq!(career.score_trend.len(), 2);
+    assert_eq!(
+        career
+            .placement_distribution
+            .iter()
+            .map(|bucket| bucket.count)
+            .sum::<u32>(),
+        2
+    );
+}
+
+#[test]
+fn duplicate_selected_names_do_not_duplicate_stats() {
+    let detail = fixture();
+    let expected = detail.players[1].stats.clone();
+    let career_input = CareerGameInput {
+        log_id: detail.log_id,
+        players: vec![detail.players[1].clone()],
+        deal_in_matrix: detail.deal_in_matrix,
+    };
+
+    let career = aggregate_career(&[career_input], &["CLS".to_owned(), "CLS".to_owned()]);
+
+    assert_eq!(career.games, 1);
+    assert_eq!(career.stats, expected);
 }
