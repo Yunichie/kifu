@@ -16,11 +16,6 @@ struct DetailRow {
 }
 
 #[derive(Deserialize)]
-struct ExistsRow {
-    present: i32,
-}
-
-#[derive(Deserialize)]
 struct ListRow {
     log_id: String,
     added_at: f64,
@@ -52,16 +47,6 @@ pub async fn find(db: &D1Database, log_id: &str) -> Result<Option<GameDetail>> {
         .await?;
 
     row.map(|row| deserialize(&row.detail_json)).transpose()
-}
-
-pub async fn exists(db: &D1Database, log_id: &str) -> Result<bool> {
-    let args = [D1Type::Text(log_id)];
-    Ok(db
-        .prepare("SELECT 1 AS present FROM games WHERE log_id = ?1 LIMIT 1")
-        .bind_refs(&args)?
-        .first::<ExistsRow>(None)
-        .await?
-        .is_some_and(|row| row.present == 1))
 }
 
 pub async fn list_all(db: &D1Database, page: u32) -> Result<GameListPage> {

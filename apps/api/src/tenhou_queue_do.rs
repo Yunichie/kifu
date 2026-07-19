@@ -6,9 +6,6 @@ use worker::{Date, Delay, DurableObject, Env, Request, Response, Result, State, 
 use crate::{db::games, tenhou_fetch};
 
 const MINIMUM_SPACING_MS: u64 = 1_000;
-const CACHE_COMMIT_LEASE_MS: u64 = 120_000;
-const CACHE_POLL_MS: u64 = 100;
-const PENDING_PREFIX: &str = "pending:";
 const LAST_FINISHED_AT_KEY: &str = "last_finished_at";
 
 #[durable_object]
@@ -40,28 +37,39 @@ impl DurableObject for TenhouQueueDO {
         let Some(log_id) = log_id else {
             return Response::error("invalid log ID", 400);
         };
-
-        let pending_key = format!("{PENDING_PREFIX}{log_id}");
-        if url.path() == "/complete" {
-            self.state.storage().delete(&pending_key).await?;
-            return Ok(Response::empty()?.with_status(204));
-        }
         if url.path() != "/fetch" {
             return Response::error("not found", 404);
         }
+        let user_id = url
+            .query_pairs()
+            .find_map(|(key, value)| (key == "user_id").then(|| value.into_owned()))
+            .and_then(|value| value.parse::<i32>().ok())
+            .filter(|value| *value > 0);
+        let Some(user_id) = user_id else {
+            return Response::error("invalid user ID", 400);
+        };
 
-        // Holding this guard across the fetch is the global serialization point.
+        // This guard is the required global serialization point for Tenhou fetches.
         let _fetch_guard = self.fetch_lock.lock().await;
         let db = self.env.d1("DB")?;
-        if games::exists(&db, &log_id).await? {
-            self.state.storage().delete(&pending_key).await?;
-            return Ok(Response::empty()?.with_status(204));
-        }
-        if self
-            .wait_for_cache_commit(&db, &log_id, &pending_key)
-            .await?
-        {
-            return Ok(Response::empty()?.with_status(204));
+        match games::find(&db, &log_id).await {
+            Ok(Some(game)) => {
+                if let Err(error) =
+                    games::save_for_user(&db, user_id, &log_id, Date::now().as_millis()).await
+                {
+                    worker::console_error!(
+                        "tenhou_queue cache link failed log_id={log_id}: {error}"
+                    );
+                    return Response::error("game cache update failed", 500);
+                }
+                worker::console_log!("tenhou_queue cache hit log_id={log_id}");
+                return Response::from_json(&game);
+            }
+            Ok(None) => {}
+            Err(error) => {
+                worker::console_error!("tenhou_queue cache lookup failed log_id={log_id}: {error}");
+                return Response::error("game cache lookup failed", 500);
+            }
         }
 
         let last_finished_at = self
@@ -79,7 +87,6 @@ impl DurableObject for TenhouQueueDO {
         worker::console_log!(
             "tenhou_queue start log_id={log_id} at={started_at} wait_ms={wait_ms}"
         );
-        self.state.storage().put(&pending_key, started_at).await?;
         let result = tenhou_fetch::fetch_from_tenhou(&log_id).await;
         let finished_at = Date::now().as_millis();
         self.state
@@ -90,11 +97,26 @@ impl DurableObject for TenhouQueueDO {
 
         match result {
             Ok(xml) => {
-                self.state.storage().put(&pending_key, finished_at).await?;
-                Response::ok(xml)
+                let game = match domain::parse_game(&log_id, &xml) {
+                    Ok(game) => game,
+                    Err(error) => {
+                        worker::console_error!(
+                            "tenhou_queue parse failed log_id={log_id}: {error}"
+                        );
+                        return Response::error("Tenhou log could not be parsed", 422);
+                    }
+                };
+                if let Err(error) =
+                    games::persist_and_save(&db, user_id, &game, Date::now().as_millis()).await
+                {
+                    worker::console_error!(
+                        "tenhou_queue cache update failed log_id={log_id}: {error}"
+                    );
+                    return Response::error("game cache update failed", 500);
+                }
+                Response::from_json(&game)
             }
             Err(error) => {
-                self.state.storage().delete(&pending_key).await?;
                 worker::console_error!("tenhou_queue fetch failed log_id={log_id}: {error}");
                 Response::error("Tenhou fetch failed", 502)
             }
@@ -104,36 +126,6 @@ impl DurableObject for TenhouQueueDO {
 
 fn spacing_delay_ms(now: u64, last_finished_at: u64) -> u64 {
     MINIMUM_SPACING_MS.saturating_sub(now.saturating_sub(last_finished_at))
-}
-
-impl TenhouQueueDO {
-    async fn wait_for_cache_commit(
-        &self,
-        db: &worker::D1Database,
-        log_id: &str,
-        pending_key: &str,
-    ) -> Result<bool> {
-        let Some(fetched_at) = self.state.storage().get::<u64>(pending_key).await? else {
-            return Ok(false);
-        };
-
-        loop {
-            if games::exists(db, log_id).await? {
-                self.state.storage().delete(pending_key).await?;
-                return Ok(true);
-            }
-
-            let elapsed = Date::now().as_millis().saturating_sub(fetched_at);
-            if elapsed >= CACHE_COMMIT_LEASE_MS {
-                self.state.storage().delete(pending_key).await?;
-                return Ok(false);
-            }
-            Delay::from(Duration::from_millis(
-                CACHE_POLL_MS.min(CACHE_COMMIT_LEASE_MS - elapsed),
-            ))
-            .await;
-        }
-    }
 }
 
 #[cfg(test)]
