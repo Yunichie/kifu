@@ -98,7 +98,7 @@ pub async fn list_saved(db: &D1Database, user_id: i32, page: u32) -> Result<Game
                  SELECT g.id, g.log_id, g.added_at, g.ruleset_json, usg.saved_at \
                  FROM user_saved_games usg JOIN games g ON g.id = usg.game_id \
                  WHERE usg.user_id = ?1 \
-                 ORDER BY usg.saved_at DESC, g.id DESC LIMIT ?2 OFFSET ?3 \
+                 ORDER BY usg.saved_at DESC, usg.game_id DESC LIMIT ?2 OFFSET ?3 \
              ) \
              SELECT g.log_id, g.added_at, g.ruleset_json, gp.seat, \
                     gp.player_name, gp.final_score, gp.placement \
