@@ -2,3 +2,5 @@
 members = ["apps/api", "crates/domain", "crates/codegen"]
 resolver = "2"
 
+[workspace.package]
+license = "MIT OR Apache-2.0"

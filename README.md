@@ -15,3 +15,8 @@ bun run dev:web
 ```
 
 The web app runs at `http://localhost:5173` and the API at `http://127.0.0.1:8787`.
+
+## License
+
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or
+[MIT License](LICENSE-MIT) at your option.
