@@ -2,7 +2,8 @@ use domain::{
     stats,
     types::{
         CareerGameInput, CareerStats, DealInMatrix, GameDetail, GameListItem, GameListPage,
-        GameListPlayer, PlayerSearchPage, PlayerSummary, Ruleset,
+        GameListPlayer, PlayerSearchPage, PlayerSummary, PublicGameDetail, PublicGameOwner,
+        Ruleset,
     },
 };
 use serde::Deserialize;
@@ -16,10 +17,20 @@ struct DetailRow {
 }
 
 #[derive(Deserialize)]
+struct PublicDetailRow {
+    detail_json: String,
+    owner_user_id: i32,
+    owner_name: String,
+}
+
+#[derive(Deserialize)]
 struct ListRow {
     log_id: String,
     added_at: f64,
     ruleset_json: String,
+    owner_user_id: i32,
+    owner_name: String,
+    is_public: i32,
     seat: Option<i32>,
     player_name: Option<String>,
     final_score: Option<i32>,
@@ -38,6 +49,11 @@ struct CareerDetailRow {
     deal_in_matrix_json: String,
 }
 
+#[derive(Deserialize)]
+struct VisibilityRow {
+    is_public: i32,
+}
+
 pub async fn find(db: &D1Database, log_id: &str) -> Result<Option<GameDetail>> {
     let args = [D1Type::Text(log_id)];
     let row = db
@@ -49,20 +65,86 @@ pub async fn find(db: &D1Database, log_id: &str) -> Result<Option<GameDetail>> {
     row.map(|row| deserialize(&row.detail_json)).transpose()
 }
 
-pub async fn list_all(db: &D1Database, page: u32) -> Result<GameListPage> {
+pub async fn find_saved(db: &D1Database, user_id: i32, log_id: &str) -> Result<Option<GameDetail>> {
+    let args = [D1Type::Integer(user_id), D1Type::Text(log_id)];
+    let row = db
+        .prepare(
+            "SELECT g.detail_json FROM user_saved_games usg \
+             JOIN games g ON g.id = usg.game_id \
+             WHERE usg.user_id = ?1 AND g.log_id = ?2 LIMIT 1",
+        )
+        .bind_refs(&args)?
+        .first::<DetailRow>(None)
+        .await?;
+
+    row.map(|row| deserialize(&row.detail_json)).transpose()
+}
+
+pub async fn find_public(
+    db: &D1Database,
+    owner_user_id: i32,
+    log_id: &str,
+) -> Result<Option<PublicGameDetail>> {
+    let args = [D1Type::Integer(owner_user_id), D1Type::Text(log_id)];
+    let row = db
+        .prepare(
+            "SELECT g.detail_json, usg.user_id AS owner_user_id, \
+                    COALESCE(( \
+                      SELECT upn.player_name FROM user_player_names upn \
+                      JOIN game_players owner_gp \
+                        ON owner_gp.game_id = g.id AND owner_gp.player_name = upn.player_name \
+                      WHERE upn.user_id = usg.user_id \
+                      ORDER BY upn.claimed_at, upn.player_name LIMIT 1 \
+                    ), u.display_name) AS owner_name \
+             FROM user_saved_games usg \
+             JOIN games g ON g.id = usg.game_id \
+             JOIN users u ON u.id = usg.user_id \
+             WHERE usg.user_id = ?1 AND g.log_id = ?2 AND usg.is_public = 1 LIMIT 1",
+        )
+        .bind_refs(&args)?
+        .first::<PublicDetailRow>(None)
+        .await?;
+
+    row.map(|row| {
+        Ok(PublicGameDetail {
+            game: deserialize(&row.detail_json)?,
+            owner: PublicGameOwner {
+                user_id: row.owner_user_id,
+                name: row.owner_name,
+            },
+        })
+    })
+    .transpose()
+}
+
+pub async fn list_public(db: &D1Database, page: u32) -> Result<GameListPage> {
     let (limit, offset) = page_values(page);
     let args = [D1Type::Integer(limit), D1Type::Integer(offset)];
     let result = db
         .prepare(
             "WITH game_page AS ( \
-                 SELECT id, log_id, added_at, ruleset_json FROM games \
-                 ORDER BY added_at DESC, id DESC LIMIT ?1 OFFSET ?2 \
+                 SELECT usg.user_id AS owner_user_id, g.id, g.log_id, g.added_at, \
+                        g.ruleset_json, usg.saved_at, usg.is_public, \
+                        COALESCE(( \
+                          SELECT upn.player_name FROM user_player_names upn \
+                          JOIN game_players owner_gp \
+                            ON owner_gp.game_id = g.id AND owner_gp.player_name = upn.player_name \
+                          WHERE upn.user_id = usg.user_id \
+                          ORDER BY upn.claimed_at, upn.player_name LIMIT 1 \
+                        ), u.display_name) AS owner_name \
+                 FROM user_saved_games usg \
+                 JOIN games g ON g.id = usg.game_id \
+                 JOIN users u ON u.id = usg.user_id \
+                 WHERE usg.is_public = 1 \
+                 ORDER BY usg.saved_at DESC, usg.game_id DESC, usg.user_id DESC \
+                 LIMIT ?1 OFFSET ?2 \
              ) \
-             SELECT g.log_id, g.added_at, g.ruleset_json, gp.seat, \
-                    gp.player_name, gp.final_score, gp.placement \
+             SELECT g.log_id, g.added_at, g.ruleset_json, g.owner_user_id, \
+                    g.owner_name, g.is_public, gp.seat, gp.player_name, \
+                    gp.final_score, gp.placement \
              FROM game_page g \
              LEFT JOIN game_players gp ON gp.game_id = g.id \
-             ORDER BY g.added_at DESC, g.id DESC, gp.seat ASC",
+             ORDER BY g.saved_at DESC, g.id DESC, g.owner_user_id DESC, gp.seat ASC",
         )
         .bind_refs(&args)?
         .all()
@@ -80,16 +162,27 @@ pub async fn list_saved(db: &D1Database, user_id: i32, page: u32) -> Result<Game
     let result = db
         .prepare(
             "WITH game_page AS ( \
-                 SELECT g.id, g.log_id, g.added_at, g.ruleset_json, usg.saved_at \
-                 FROM user_saved_games usg JOIN games g ON g.id = usg.game_id \
+                 SELECT usg.user_id AS owner_user_id, g.id, g.log_id, g.added_at, \
+                        g.ruleset_json, usg.saved_at, usg.is_public, \
+                        COALESCE(( \
+                          SELECT upn.player_name FROM user_player_names upn \
+                          JOIN game_players owner_gp \
+                            ON owner_gp.game_id = g.id AND owner_gp.player_name = upn.player_name \
+                          WHERE upn.user_id = usg.user_id \
+                          ORDER BY upn.claimed_at, upn.player_name LIMIT 1 \
+                        ), u.display_name) AS owner_name \
+                 FROM user_saved_games usg \
+                 JOIN games g ON g.id = usg.game_id \
+                 JOIN users u ON u.id = usg.user_id \
                  WHERE usg.user_id = ?1 \
                  ORDER BY usg.saved_at DESC, usg.game_id DESC LIMIT ?2 OFFSET ?3 \
              ) \
-             SELECT g.log_id, g.added_at, g.ruleset_json, gp.seat, \
-                    gp.player_name, gp.final_score, gp.placement \
+             SELECT g.log_id, g.added_at, g.ruleset_json, g.owner_user_id, \
+                    g.owner_name, g.is_public, gp.seat, gp.player_name, \
+                    gp.final_score, gp.placement \
              FROM game_page g \
              LEFT JOIN game_players gp ON gp.game_id = g.id \
-             ORDER BY g.saved_at DESC, g.id DESC, gp.seat ASC",
+             ORDER BY g.saved_at DESC, g.id DESC, g.owner_user_id DESC, gp.seat ASC",
         )
         .bind_refs(&args)?
         .all()
@@ -115,9 +208,13 @@ pub async fn search_players(db: &D1Database, query: &str, page: u32) -> Result<P
     ];
     let result = db
         .prepare(
-            "SELECT DISTINCT player_name FROM game_players \
-             WHERE player_name LIKE ?1 ESCAPE '\\' COLLATE NOCASE \
-             ORDER BY player_name COLLATE NOCASE, player_name \
+            "SELECT DISTINCT gp.player_name FROM game_players gp \
+             WHERE gp.player_name LIKE ?1 ESCAPE '\\' COLLATE NOCASE \
+               AND EXISTS ( \
+                 SELECT 1 FROM user_saved_games usg \
+                 WHERE usg.game_id = gp.game_id AND usg.is_public = 1 \
+               ) \
+             ORDER BY gp.player_name COLLATE NOCASE, gp.player_name \
              LIMIT ?2 OFFSET ?3",
         )
         .bind_refs(&args)?
@@ -233,7 +330,47 @@ pub async fn remove_saved(db: &D1Database, user_id: i32, log_id: &str) -> Result
     Ok(())
 }
 
-pub async fn career(db: &D1Database, player_names: &[String]) -> Result<CareerStats> {
+pub async fn set_visibility(
+    db: &D1Database,
+    user_id: i32,
+    log_id: &str,
+    is_public: bool,
+) -> Result<bool> {
+    let args = [
+        D1Type::Integer(user_id),
+        D1Type::Text(log_id),
+        D1Type::Integer(i32::from(is_public)),
+    ];
+    let row = db
+        .prepare(
+            "UPDATE user_saved_games SET is_public = ?3 \
+             WHERE user_id = ?1 \
+               AND game_id = (SELECT id FROM games WHERE log_id = ?2) \
+             RETURNING is_public",
+        )
+        .bind_refs(&args)?
+        .first::<VisibilityRow>(None)
+        .await?;
+    Ok(row.is_some_and(|row| row.is_public == i32::from(is_public)))
+}
+
+pub async fn public_career(db: &D1Database, player_names: &[String]) -> Result<CareerStats> {
+    career(db, player_names, None).await
+}
+
+pub async fn visible_career(
+    db: &D1Database,
+    user_id: i32,
+    player_names: &[String],
+) -> Result<CareerStats> {
+    career(db, player_names, Some(user_id)).await
+}
+
+async fn career(
+    db: &D1Database,
+    player_names: &[String],
+    user_id: Option<i32>,
+) -> Result<CareerStats> {
     if player_names.is_empty() {
         return Ok(stats::aggregate_career(&[], player_names));
     }
@@ -242,10 +379,29 @@ pub async fn career(db: &D1Database, player_names: &[String]) -> Result<CareerSt
         .map(|index| format!("?{index}"))
         .collect::<Vec<_>>()
         .join(", ");
-    let args = player_names
+    let mut args = player_names
         .iter()
         .map(|name| D1Type::Text(name))
         .collect::<Vec<_>>();
+    let visibility = if let Some(user_id) = user_id {
+        let user_placeholder = format!("?{}", player_names.len() + 1);
+        args.push(D1Type::Integer(user_id));
+        format!(
+            "(EXISTS ( \
+               SELECT 1 FROM user_saved_games public_save \
+               WHERE public_save.game_id = g.id AND public_save.is_public = 1 \
+             ) OR EXISTS ( \
+               SELECT 1 FROM user_saved_games own_save \
+               WHERE own_save.game_id = g.id AND own_save.user_id = {user_placeholder} \
+             ))"
+        )
+    } else {
+        "EXISTS ( \
+           SELECT 1 FROM user_saved_games public_save \
+           WHERE public_save.game_id = g.id AND public_save.is_public = 1 \
+         )"
+        .to_owned()
+    };
     let rows = db
         .prepare(format!(
             "SELECT g.log_id, player.value AS player_json, \
@@ -255,6 +411,7 @@ pub async fn career(db: &D1Database, player_names: &[String]) -> Result<CareerSt
              JOIN json_each(g.detail_json, '$.players') player \
                ON CAST(json_extract(player.value, '$.seat') AS INTEGER) = gp.seat \
              WHERE gp.player_name IN ({placeholders}) \
+               AND {visibility} \
              ORDER BY g.added_at ASC, g.id ASC, gp.seat ASC"
         ))
         .bind_refs(&args)?
@@ -285,12 +442,20 @@ fn career_inputs(rows: Vec<CareerDetailRow>) -> Result<Vec<CareerGameInput>> {
 fn list_items(result: D1Result) -> Result<Vec<GameListItem>> {
     let mut games: Vec<GameListItem> = Vec::new();
     for row in result.results::<ListRow>()? {
-        if games.last().is_none_or(|game| game.log_id != row.log_id) {
+        if games
+            .last()
+            .is_none_or(|game| game.log_id != row.log_id || game.owner.user_id != row.owner_user_id)
+        {
             games.push(GameListItem {
                 log_id: row.log_id.clone(),
                 added_at: row.added_at,
                 rules: deserialize::<Ruleset>(&row.ruleset_json)?,
                 players: Vec::new(),
+                owner: PublicGameOwner {
+                    user_id: row.owner_user_id,
+                    name: row.owner_name,
+                },
+                is_public: row.is_public == 1,
             });
         }
 

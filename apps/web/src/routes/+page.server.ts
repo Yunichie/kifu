@@ -1,4 +1,10 @@
-import type { AddGameInput, GameDetail, GameListPage, PlayerSearchPage } from '@kifu/api-types';
+import type {
+  AddGameInput,
+  GameDetail,
+  GameListPage,
+  PlayerSearchPage,
+  UpdateGameVisibilityInput
+} from '@kifu/api-types';
 import { fail, redirect } from '@sveltejs/kit';
 import { ApiError, apiRequest } from '$lib/api/client';
 import { pageParam, playerQuery } from '$lib/query';
@@ -10,7 +16,7 @@ export const load: PageServerLoad = async (event) => {
   const page = pageParam(event.url.searchParams.get('page'));
   const query = playerQuery(event.url.searchParams.get('q'));
   const playerPage = pageParam(event.url.searchParams.get('playerPage'));
-  const gamePath = view === 'library' ? '/api/me/library' : '/api/games';
+  const gamePath = view === 'library' ? '/api/me/library' : '/api/public-games';
   const [games, playerResults] = await Promise.all([
     apiRequest<GameListPage>(event, `${gamePath}?page=${page}`),
     apiRequest<PlayerSearchPage>(
@@ -49,5 +55,22 @@ export const actions = {
       throw error;
     }
     redirect(303, '/');
+  },
+  visibility: async (event) => {
+    const formData = await event.request.formData();
+    const logId = String(formData.get('logId') ?? '');
+    const body = {
+      isPublic: formData.get('isPublic') === 'true'
+    } satisfies UpdateGameVisibilityInput;
+    try {
+      await apiRequest<void>(
+        event,
+        `/api/me/library/${encodeURIComponent(logId)}/visibility`,
+        { method: 'PATCH', body }
+      );
+    } catch (error) {
+      if (error instanceof ApiError) return fail(error.status, { message: error.message });
+      throw error;
+    }
   }
 } satisfies Actions;

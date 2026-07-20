@@ -89,7 +89,12 @@
   </div>
 
   {#if data.games.items.length > 0}
-    <GameList games={data.games.items} removable={data.view === 'library'} />
+    <GameList
+      games={data.games.items}
+      removable={data.view === 'library'}
+      showOwners={data.view === 'all'}
+      visibilityEditable={data.view === 'library'}
+    />
     <Pagination
       page={data.games.page}
       hasNext={data.games.hasNext}
@@ -100,7 +105,7 @@
   {:else}
     <div class="empty-state">
       <span class="empty-plaque" aria-hidden="true"><i></i></span>
-      <p>{data.view === 'library' ? 'No logs saved yet.' : 'No logs added yet.'}</p>
+      <p>{data.view === 'library' ? 'No logs saved yet.' : 'No public logs yet.'}</p>
       {#if data.me}
         <a class="button-primary" href="#add-log">Add your first log</a>
       {:else}

@@ -2,10 +2,23 @@
   import type { GameListItem, GameListPlayer } from '@kifu/api-types';
   import ArrowRight from 'lucide-svelte/icons/arrow-right';
   import Crown from 'lucide-svelte/icons/crown';
+  import Eye from 'lucide-svelte/icons/eye';
+  import EyeOff from 'lucide-svelte/icons/eye-off';
+  import UserRound from 'lucide-svelte/icons/user-round';
   import X from 'lucide-svelte/icons/x';
   import { formatDate, formatScore, rulesLabel } from '$lib/format';
 
-  let { games, removable = false }: { games: GameListItem[]; removable?: boolean } = $props();
+  let {
+    games,
+    removable = false,
+    showOwners = false,
+    visibilityEditable = false
+  }: {
+    games: GameListItem[];
+    removable?: boolean;
+    showOwners?: boolean;
+    visibilityEditable?: boolean;
+  } = $props();
   const seatBorders = ['border-man', 'border-pin', 'border-sou', 'border-gold'];
   const seatDots = ['bg-man', 'bg-pin', 'bg-sou', 'bg-gold'];
 
@@ -16,6 +29,11 @@
   function placementLabel(placement: number | null): string {
     if (!placement) return '—';
     return `${placement}${placement === 1 ? 'st' : placement === 2 ? 'nd' : placement === 3 ? 'rd' : 'th'}`;
+  }
+
+  function gameHref(game: GameListItem): string {
+    const path = `/games/${game.logId}`;
+    return showOwners ? `${path}?owner=${game.owner.userId}` : path;
   }
 </script>
 
@@ -31,6 +49,12 @@
             <td class="align-top">
               <time datetime={new Date(game.addedAt).toISOString()}>{formatDate(game.addedAt)}</time>
               <div class="mt-1 max-w-32 truncate text-[10px] leading-4 font-normal text-text-tertiary" title={game.logId}>{game.logId}</div>
+              {#if showOwners}
+                <div class="owner-label mt-2" title={`Shared by ${game.owner.name}`}>
+                  <UserRound size={13} strokeWidth={1.75} aria-hidden="true" />
+                  <span>Shared by <strong>{game.owner.name}</strong></span>
+                </div>
+              {/if}
             </td>
             <td class="align-top">
               <div class="font-sans text-[13px] font-bold">{rulesLabel(game.rules)}</div>
@@ -57,7 +81,24 @@
             </td>
             <td>
               <div class="flex items-center justify-end gap-1">
-                <a class="icon-button" href={`/games/${game.logId}`} aria-label={`Open game ${game.logId}`} title="Open game">
+                {#if visibilityEditable}
+                  <form method="POST" action="?/visibility">
+                    <input type="hidden" name="logId" value={game.logId} />
+                    <input type="hidden" name="isPublic" value={game.isPublic ? 'false' : 'true'} />
+                    <button
+                      class={['visibility-switch', game.isPublic && 'public']}
+                      type="submit"
+                      role="switch"
+                      aria-checked={game.isPublic}
+                      aria-label={`${game.isPublic ? 'Hide' : 'Publish'} game ${game.logId}`}
+                      title={game.isPublic ? 'Hide from public' : 'Show publicly'}
+                    >
+                      {#if game.isPublic}<Eye size={15} strokeWidth={1.75} aria-hidden="true" />{:else}<EyeOff size={15} strokeWidth={1.75} aria-hidden="true" />{/if}
+                      <span>{game.isPublic ? 'Public' : 'Hidden'}</span>
+                    </button>
+                  </form>
+                {/if}
+                <a class="icon-button" href={gameHref(game)} aria-label={`Open game ${game.logId}`} title="Open game">
                   <ArrowRight size={17} strokeWidth={1.75} aria-hidden="true" />
                 </a>
                 {#if removable}
@@ -84,10 +125,16 @@
         <div class="min-w-0">
           <time class="font-mono text-[12px] font-semibold" datetime={new Date(game.addedAt).toISOString()}>{formatDate(game.addedAt)}</time>
           <p class="mt-0.5 truncate font-mono text-[10px] leading-4 text-text-tertiary">{game.logId}</p>
+          {#if showOwners}
+            <div class="owner-label mt-1.5" title={`Shared by ${game.owner.name}`}>
+              <UserRound size={13} strokeWidth={1.75} aria-hidden="true" />
+              <span>Shared by <strong>{game.owner.name}</strong></span>
+            </div>
+          {/if}
         </div>
         <div class="flex items-center gap-1">
           {#if game.rules.akaDora}<span class="stamp-tag text-gold">Aka</span>{/if}
-          <a class="icon-button" href={`/games/${game.logId}`} aria-label={`Open game ${game.logId}`} title="Open game">
+          <a class="icon-button" href={gameHref(game)} aria-label={`Open game ${game.logId}`} title="Open game">
             <ArrowRight size={17} strokeWidth={1.75} aria-hidden="true" />
           </a>
           {#if removable}
@@ -101,7 +148,26 @@
         </div>
       </header>
       <div class="border-b border-border-subtle px-3 py-2 text-[11px] font-bold text-text-secondary">
-        {rulesLabel(game.rules)}{game.rules.kuitan ? ' · Kuitan' : ''}{game.rules.fast ? ' · Fast' : ''}
+        <div class="flex items-center justify-between gap-3">
+          <span>{rulesLabel(game.rules)}{game.rules.kuitan ? ' · Kuitan' : ''}{game.rules.fast ? ' · Fast' : ''}</span>
+          {#if visibilityEditable}
+            <form method="POST" action="?/visibility">
+              <input type="hidden" name="logId" value={game.logId} />
+              <input type="hidden" name="isPublic" value={game.isPublic ? 'false' : 'true'} />
+              <button
+                class={['visibility-switch', game.isPublic && 'public']}
+                type="submit"
+                role="switch"
+                aria-checked={game.isPublic}
+                aria-label={`${game.isPublic ? 'Hide' : 'Publish'} game ${game.logId}`}
+                title={game.isPublic ? 'Hide from public' : 'Show publicly'}
+              >
+                {#if game.isPublic}<Eye size={15} strokeWidth={1.75} aria-hidden="true" />{:else}<EyeOff size={15} strokeWidth={1.75} aria-hidden="true" />{/if}
+                <span>{game.isPublic ? 'Public' : 'Hidden'}</span>
+              </button>
+            </form>
+          {/if}
+        </div>
       </div>
       <ol class="divide-y divide-border-subtle">
         {#each ranked(game.players) as player (player.seat)}
@@ -138,6 +204,13 @@
   .placement { display: inline-flex; align-items: center; gap: 3px; color: var(--text-tertiary); font-size: 10px; font-weight: 700; text-transform: uppercase; }
   .winner .placement { color: var(--gold); }
   .score { color: var(--text-primary); font-family: "Roboto Mono", "BIZ UDPGothic", monospace; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .owner-label { display: flex; max-width: 160px; align-items: center; gap: 4px; color: var(--text-tertiary); font-size: 10px; line-height: 16px; }
+  .owner-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .owner-label strong { color: var(--text-secondary); }
+  .visibility-switch { display: inline-flex; width: 82px; min-height: 32px; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--surface-2); color: var(--text-tertiary); font-size: 10px; font-weight: 700; transition: border-color var(--motion-fast), background-color var(--motion-fast), color var(--motion-fast); }
+  .visibility-switch:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .visibility-switch.public { border-color: color-mix(in srgb, var(--sou) 55%, var(--border-default)); background: color-mix(in srgb, var(--sou) 10%, var(--surface-2)); color: var(--sou); }
+  .visibility-switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
   .mobile-game {
     overflow: hidden;
