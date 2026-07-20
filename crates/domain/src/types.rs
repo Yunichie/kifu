@@ -67,6 +67,23 @@ pub struct AddGameInput {
     pub log_id: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
+pub struct UpdateGameVisibilityInput {
+    pub is_public: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
+pub struct PublicGameOwner {
+    pub user_id: i32,
+    pub name: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
@@ -76,6 +93,8 @@ pub struct GameListItem {
     pub added_at: f64,
     pub rules: Ruleset,
     pub players: Vec<GameListPlayer>,
+    pub owner: PublicGameOwner,
+    pub is_public: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -127,6 +146,15 @@ pub struct GameDetail {
     pub players: Vec<PlayerSummary>,
     pub kyoku: Vec<Kyoku>,
     pub deal_in_matrix: DealInMatrix,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "bindings", ts(export_to = "../../packages/api-types/src/"))]
+pub struct PublicGameDetail {
+    pub game: GameDetail,
+    pub owner: PublicGameOwner,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]

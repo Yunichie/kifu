@@ -1,12 +1,10 @@
 use axum::{
     Json, Router,
-    extract::{Path, Query, State, rejection::JsonRejection},
+    extract::{Path, State, rejection::JsonRejection},
     http::StatusCode,
-    response::Response,
-    routing::get,
+    routing::{get, post},
 };
-use domain::types::{AddGameInput, GameDetail, GameListPage};
-use serde::Deserialize;
+use domain::types::{AddGameInput, GameDetail};
 
 use crate::{
     auth::middleware::AuthedUser,
@@ -18,26 +16,8 @@ use crate::{
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/api/games", get(list).post(add))
+        .route("/api/games", post(add))
         .route("/api/games/{id}", get(detail).delete(remove))
-}
-
-#[derive(Default, Deserialize)]
-struct PaginationQuery {
-    page: Option<u32>,
-}
-
-#[worker::send]
-async fn list(
-    State(state): State<AppState>,
-    Query(query): Query<PaginationQuery>,
-) -> Result<Json<GameListPage>, ApiError> {
-    let page = super::valid_page(query.page)?;
-    Ok(Json(
-        games::list_all(state.db(), page)
-            .await
-            .map_err(ApiError::internal)?,
-    ))
 }
 
 #[worker::send]
@@ -76,14 +56,15 @@ async fn add(
 #[worker::send]
 async fn detail(
     State(state): State<AppState>,
+    user: AuthedUser,
     Path(id): Path<String>,
-) -> Result<Response, ApiError> {
+) -> Result<Json<GameDetail>, ApiError> {
     let log_id = exact_log_id(&id)?;
-    let game = games::find(state.db(), &log_id)
+    let game = games::find_saved(state.db(), user.id, &log_id)
         .await
         .map_err(ApiError::internal)?
         .ok_or_else(|| ApiError::not_found("game not found"))?;
-    Ok(super::cached_json(game, super::GAME_CACHE_CONTROL))
+    Ok(Json(game))
 }
 
 #[worker::send]
@@ -99,7 +80,7 @@ async fn remove(
     Ok(StatusCode::NO_CONTENT)
 }
 
-fn exact_log_id(value: &str) -> Result<String, ApiError> {
+pub(super) fn exact_log_id(value: &str) -> Result<String, ApiError> {
     let canonical = tenhou_fetch::canonical_log_id(value)
         .map_err(|_| ApiError::bad_request("invalid Tenhou log ID"))?;
     if canonical != value {
