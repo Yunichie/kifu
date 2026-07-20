@@ -2,13 +2,32 @@
   import Users from 'lucide-svelte/icons/users';
   import CareerView from '$lib/components/CareerView.svelte';
   import PlayerSearch from '$lib/components/PlayerSearch.svelte';
+  import { careerCanonical } from '$lib/seo';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
+  let isIndexable = $derived(
+    data.career === null && !data.query && data.playerResults?.page === 1
+  );
+  let canonical = $derived(careerCanonical(data.siteUrl));
+  const pageTitle = 'Tenhou player career statistics | Kifu';
+  const description = 'Find public Tenhou player records and detailed riichi mahjong statistics.';
 </script>
 
 <svelte:head>
-  <title>Career | Kifu</title>
+  <title>{data.career ? 'Your Tenhou career | Kifu' : pageTitle}</title>
+  {#if isIndexable}
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kifu" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+  {:else}
+    <meta name="robots" content="noindex,follow" />
+  {/if}
 </svelte:head>
 
 {#if data.career}

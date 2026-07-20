@@ -7,13 +7,24 @@
   import GameList from '$lib/components/GameList.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import PlayerSearch from '$lib/components/PlayerSearch.svelte';
+  import { homeCanonical } from '$lib/seo';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
+  let isIndexable = $derived(
+    data.view === 'all' && !data.query && data.playerResults.page === 1
+  );
+  let canonical = $derived(homeCanonical(data.siteUrl, data.games.page));
+  let pageTitle = $derived(
+    data.games.page > 1
+      ? `Tenhou game records, page ${data.games.page} | Kifu`
+      : 'Tenhou riichi mahjong game records | Kifu'
+  );
+  const description = 'Browse public Tenhou game records and riichi mahjong career statistics.';
 
   function homeHref(gamePage: number, playerPage: number, view = data.view): string {
     const params = new URLSearchParams();
-    if (view === 'all') params.set('view', 'all');
+    if (view === 'all' && data.me) params.set('view', 'all');
     if (gamePage > 1) params.set('page', String(gamePage));
     if (data.query) params.set('q', data.query);
     if (playerPage > 1) params.set('playerPage', String(playerPage));
@@ -23,8 +34,19 @@
 </script>
 
 <svelte:head>
-  <title>Logs | Kifu</title>
-  <meta name="description" content="Tenhou game records and riichi career statistics" />
+  <title>{pageTitle}</title>
+  {#if isIndexable}
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kifu" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+  {:else}
+    <meta name="robots" content="noindex,follow" />
+  {/if}
 </svelte:head>
 
 <header class="mb-5 sm:mb-6">
@@ -87,6 +109,12 @@
       >All games</a>
     </nav>
   </div>
+
+  {#if data.me && data.view === 'library'}
+    <p class="mb-4 text-[12px] leading-[18px] text-text-tertiary">
+      Public games and their player statistics may appear in search results.
+    </p>
+  {/if}
 
   {#if data.games.items.length > 0}
     <GameList

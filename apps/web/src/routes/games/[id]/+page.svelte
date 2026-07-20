@@ -5,12 +5,24 @@
   import ChartCard from '$lib/components/ChartCard.svelte';
   import DealInMatrix from '$lib/components/DealInMatrix.svelte';
   import HandScoreChart from '$lib/components/HandScoreChart.svelte';
-  import { formatPercent, formatScore, formatSigned, resultLabel, roundLabel } from '$lib/format';
+  import { formatPercent, formatScore, formatSigned, resultLabel, roundLabel, rulesLabel } from '$lib/format';
   import { buildHandLedger } from '$lib/handLedger';
   import { hasCareer } from '$lib/player';
+  import { gameCanonical } from '$lib/seo';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
+  let isIndexable = $derived(data.publicOwner !== null);
+  let playerNames = $derived(data.game.players.map((player) => player.name).join(', '));
+  let pageTitle = $derived(`${rulesLabel(data.game.rules)}: ${playerNames} | Kifu`);
+  let description = $derived(
+    `Tenhou riichi mahjong game summary for ${playerNames}${data.publicOwner ? `, shared by ${data.publicOwner.name}` : ''}.`
+  );
+  let canonical = $derived(
+    data.publicOwner
+      ? gameCanonical(data.siteUrl, data.game.logId, data.publicOwner.userId)
+      : ''
+  );
   const seatBorders = ['border-t-man', 'border-t-pin', 'border-t-sou', 'border-t-gold'];
   const seatRules = ['border-man', 'border-pin', 'border-sou', 'border-gold'];
   let handLedger = $derived(buildHandLedger(data.game));
@@ -32,7 +44,19 @@
 {/snippet}
 
 <svelte:head>
-  <title>This Game | Kifu</title>
+  <title>{pageTitle}</title>
+  {#if isIndexable}
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kifu" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+  {:else}
+    <meta name="robots" content="noindex,follow" />
+  {/if}
 </svelte:head>
 
 <section class="mb-9 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Final scores">

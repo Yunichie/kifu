@@ -10,6 +10,7 @@
 
 <svelte:head>
   <title>Settings | Kifu</title>
+  <meta name="robots" content="noindex,follow" />
 </svelte:head>
 
 <div class="max-w-2xl">

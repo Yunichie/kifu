@@ -20,7 +20,9 @@ export const load: LayoutServerLoad = async (event) => {
       publicOwner: null
     };
   } catch (reason) {
-    if (reason instanceof ApiError && reason.status === 404) error(404, 'Game not found');
+    if (reason instanceof ApiError && (reason.status === 400 || reason.status === 404)) {
+      error(404, 'Game not found');
+    }
     if (reason instanceof ApiError && reason.status === 401) redirect(303, '/login');
     throw reason;
   }

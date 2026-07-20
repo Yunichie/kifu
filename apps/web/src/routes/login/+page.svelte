@@ -8,6 +8,7 @@
 
 <svelte:head>
   <title>Log in | Kifu</title>
+  <meta name="robots" content="noindex,follow" />
 </svelte:head>
 
 <div class="auth-shell">

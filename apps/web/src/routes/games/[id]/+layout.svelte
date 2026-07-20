@@ -14,7 +14,7 @@
 </script>
 
 <header class="mb-6">
-  <a class="back-link" href={data.publicOwner ? '/?view=all' : '/'}>
+  <a class="back-link" href={data.publicOwner && data.me ? '/?view=all' : '/'}>
     <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />
     Game ledger
   </a>

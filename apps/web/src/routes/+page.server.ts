@@ -5,7 +5,7 @@ import type {
   PlayerSearchPage,
   UpdateGameVisibilityInput
 } from '@kifu/api-types';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { ApiError, apiRequest } from '$lib/api/client';
 import { pageParam, playerQuery } from '$lib/query';
 import type { Actions, PageServerLoad } from './$types';
@@ -24,6 +24,7 @@ export const load: PageServerLoad = async (event) => {
       `/api/players?${new URLSearchParams({ q: query, page: String(playerPage) })}`
     )
   ]);
+  if (view === 'all' && page > 1 && games.items.length === 0) error(404, 'Page not found');
   return { games, playerResults, query, view };
 };
 

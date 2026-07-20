@@ -15,7 +15,8 @@
 </script>
 
 <svelte:head>
-  <title>Table Replay | Kifu</title>
+  <title>Tenhou table replay | Kifu</title>
+  <meta name="robots" content="noindex,follow" />
 </svelte:head>
 
 <section>

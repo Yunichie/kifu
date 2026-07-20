@@ -34,7 +34,7 @@
 
   function gameHref(game: GameListItem): string {
     const path = `/games/${game.logId}`;
-    return showOwners ? `${path}?owner=${game.owner.userId}` : path;
+    return showOwners || game.isPublic ? `${path}?owner=${game.owner.userId}` : path;
   }
 </script>
 
@@ -96,7 +96,7 @@
                       role="switch"
                       aria-checked={game.isPublic}
                       aria-label={`${game.isPublic ? 'Hide' : 'Publish'} game ${game.logId}`}
-                      title={game.isPublic ? 'Hide from public' : 'Show publicly'}
+                      title={game.isPublic ? 'Hide from public and search' : 'Publish to public and search'}
                     >
                       {#if game.isPublic}<Eye size={15} strokeWidth={1.75} aria-hidden="true" />{:else}<EyeOff size={15} strokeWidth={1.75} aria-hidden="true" />{/if}
                       <span>{game.isPublic ? 'Public' : 'Hidden'}</span>
@@ -165,7 +165,7 @@
                 role="switch"
                 aria-checked={game.isPublic}
                 aria-label={`${game.isPublic ? 'Hide' : 'Publish'} game ${game.logId}`}
-                title={game.isPublic ? 'Hide from public' : 'Show publicly'}
+                title={game.isPublic ? 'Hide from public and search' : 'Publish to public and search'}
               >
                 {#if game.isPublic}<Eye size={15} strokeWidth={1.75} aria-hidden="true" />{:else}<EyeOff size={15} strokeWidth={1.75} aria-hidden="true" />{/if}
                 <span>{game.isPublic ? 'Public' : 'Hidden'}</span>
