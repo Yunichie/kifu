@@ -11,6 +11,8 @@ mod state;
 mod tenhou_fetch;
 mod tenhou_queue_do;
 
+const TENHOU_GUEST_NAME: &str = "NoName";
+
 #[event(fetch)]
 pub async fn fetch(
     request: HttpRequest,

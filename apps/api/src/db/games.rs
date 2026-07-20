@@ -203,6 +203,7 @@ pub async fn search_players(db: &D1Database, query: &str, page: u32) -> Result<P
     let pattern = like_prefix(query);
     let args = [
         D1Type::Text(&pattern),
+        D1Type::Text(crate::TENHOU_GUEST_NAME),
         D1Type::Integer(limit),
         D1Type::Integer(offset),
     ];
@@ -210,12 +211,13 @@ pub async fn search_players(db: &D1Database, query: &str, page: u32) -> Result<P
         .prepare(
             "SELECT DISTINCT gp.player_name FROM game_players gp \
              WHERE gp.player_name LIKE ?1 ESCAPE '\\' COLLATE NOCASE \
+               AND gp.player_name <> ?2 \
                AND EXISTS ( \
                  SELECT 1 FROM user_saved_games usg \
                  WHERE usg.game_id = gp.game_id AND usg.is_public = 1 \
                ) \
              ORDER BY gp.player_name COLLATE NOCASE, gp.player_name \
-             LIMIT ?2 OFFSET ?3",
+             LIMIT ?3 OFFSET ?4",
         )
         .bind_refs(&args)?
         .all()
@@ -371,20 +373,24 @@ async fn career(
     player_names: &[String],
     user_id: Option<i32>,
 ) -> Result<CareerStats> {
-    if player_names.is_empty() {
+    let career_player_names = player_names
+        .iter()
+        .filter(|name| should_aggregate_player(name))
+        .collect::<Vec<_>>();
+    if career_player_names.is_empty() {
         return Ok(stats::aggregate_career(&[], player_names));
     }
 
-    let placeholders = (1..=player_names.len())
+    let placeholders = (1..=career_player_names.len())
         .map(|index| format!("?{index}"))
         .collect::<Vec<_>>()
         .join(", ");
-    let mut args = player_names
+    let mut args = career_player_names
         .iter()
-        .map(|name| D1Type::Text(name))
+        .map(|name| D1Type::Text(name.as_str()))
         .collect::<Vec<_>>();
     let visibility = if let Some(user_id) = user_id {
-        let user_placeholder = format!("?{}", player_names.len() + 1);
+        let user_placeholder = format!("?{}", career_player_names.len() + 1);
         args.push(D1Type::Integer(user_id));
         format!(
             "(EXISTS ( \
@@ -519,13 +525,17 @@ fn as_i32(value: u32) -> Result<i32> {
     i32::try_from(value).map_err(data_error)
 }
 
+fn should_aggregate_player(name: &str) -> bool {
+    name != crate::TENHOU_GUEST_NAME
+}
+
 fn data_error(error: impl std::fmt::Display) -> Error {
     Error::RustError(format!("invalid game data: {error}"))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{CareerDetailRow, career_inputs, like_prefix};
+    use super::{CareerDetailRow, career_inputs, like_prefix, should_aggregate_player};
 
     const LOG_ID: &str = "2017010100gm-00a9-0000-003dbd5d";
     const XML: &str = include_str!(
@@ -536,6 +546,14 @@ mod tests {
     fn escapes_like_metacharacters_in_player_prefixes() {
         assert_eq!(like_prefix("a%b_c\\d"), "a\\%b\\_c\\\\d%");
         assert_eq!(like_prefix("\u{77f3}\u{6a4b}"), "\u{77f3}\u{6a4b}%");
+    }
+
+    #[test]
+    fn excludes_only_the_exact_tenhou_guest_name_from_careers() {
+        assert!(!should_aggregate_player("NoName"));
+        assert!(should_aggregate_player("noname"));
+        assert!(should_aggregate_player("NoName2"));
+        assert!(should_aggregate_player("CLS"));
     }
 
     #[test]
