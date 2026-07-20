@@ -36,7 +36,7 @@ async fn career(
         .await
         .map_err(ApiError::internal)?;
     Ok(Json(
-        games::career(state.db(), &player_names)
+        games::visible_career(state.db(), user.id, &player_names)
             .await
             .map_err(ApiError::internal)?,
     ))
