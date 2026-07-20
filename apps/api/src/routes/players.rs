@@ -43,16 +43,36 @@ async fn career(
     State(state): State<AppState>,
     Path(name): Path<String>,
 ) -> Result<Json<CareerStats>, ApiError> {
-    validate_player_name(&name)?;
+    validate_career_player_name(&name)?;
     let career = games::public_career(state.db(), &[name])
         .await
         .map_err(ApiError::internal)?;
     Ok(Json(career))
 }
 
-fn validate_player_name(name: &str) -> Result<(), ApiError> {
+fn validate_career_player_name(name: &str) -> Result<(), ApiError> {
+    if name == crate::TENHOU_GUEST_NAME {
+        return Err(ApiError::not_found("player not found"));
+    }
     if !super::valid_player_name(name) {
         return Err(ApiError::bad_request("invalid player name"));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::error::ApiError;
+
+    use super::validate_career_player_name;
+
+    #[test]
+    fn hides_the_tenhou_guest_career_path() {
+        assert!(matches!(
+            validate_career_player_name("NoName"),
+            Err(ApiError::NotFound(_))
+        ));
+        assert!(validate_career_player_name("noname").is_ok());
+        assert!(validate_career_player_name("CLS").is_ok());
+    }
 }
