@@ -117,5 +117,23 @@ fn validate_player_name(name: &str) -> Result<(), ApiError> {
             "player name must be 1-64 characters without control characters",
         ));
     }
+    if name == crate::TENHOU_GUEST_NAME {
+        return Err(ApiError::bad_request(
+            "NoName is a temporary Tenhou guest and cannot be claimed",
+        ));
+    }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_player_name;
+
+    #[test]
+    fn rejects_only_the_exact_tenhou_guest_name() {
+        assert!(validate_player_name("NoName").is_err());
+        assert!(validate_player_name("noname").is_ok());
+        assert!(validate_player_name("NoName2").is_ok());
+        assert!(validate_player_name("CLS").is_ok());
+    }
 }
