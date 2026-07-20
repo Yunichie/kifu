@@ -7,6 +7,7 @@
   import UserRound from 'lucide-svelte/icons/user-round';
   import X from 'lucide-svelte/icons/x';
   import { formatDate, formatScore, rulesLabel } from '$lib/format';
+  import { hasCareer } from '$lib/player';
 
   let {
     games,
@@ -73,7 +74,11 @@
                       {#if player.placement === 1}<Crown size={13} strokeWidth={1.75} aria-hidden="true" />{/if}
                       {placementLabel(player.placement)}
                     </span>
-                    <a class="truncate hover:underline" href={`/career/${encodeURIComponent(player.name)}`}>{player.name}</a>
+                    {#if hasCareer(player.name)}
+                      <a class="truncate hover:underline" href={`/career/${encodeURIComponent(player.name)}`}>{player.name}</a>
+                    {:else}
+                      <span class="truncate">{player.name}</span>
+                    {/if}
                     <span class="score">{formatScore(player.finalScore)}</span>
                   </li>
                 {/each}
@@ -177,7 +182,11 @@
               {#if player.placement === 1}<Crown size={14} strokeWidth={1.75} aria-label="Winner" />{/if}
               {placementLabel(player.placement)}
             </span>
-            <a class="min-w-0 flex-1 truncate font-bold hover:underline" href={`/career/${encodeURIComponent(player.name)}`}>{player.name}</a>
+            {#if hasCareer(player.name)}
+              <a class="min-w-0 flex-1 truncate font-bold hover:underline" href={`/career/${encodeURIComponent(player.name)}`}>{player.name}</a>
+            {:else}
+              <span class="min-w-0 flex-1 truncate font-bold">{player.name}</span>
+            {/if}
             <span class="font-mono text-[13px] font-semibold tabular-nums">{formatScore(player.finalScore)}</span>
           </li>
         {/each}

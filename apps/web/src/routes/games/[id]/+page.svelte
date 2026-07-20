@@ -7,6 +7,7 @@
   import HandScoreChart from '$lib/components/HandScoreChart.svelte';
   import { formatPercent, formatScore, formatSigned, resultLabel, roundLabel } from '$lib/format';
   import { buildHandLedger } from '$lib/handLedger';
+  import { hasCareer } from '$lib/player';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
@@ -38,7 +39,11 @@
   {#each data.game.players as player (player.seat)}
     <article class={['player-summary', seatBorders[player.seat] ?? 'border-t-border']}>
       <header>
-        <a class="min-w-0 flex-1 truncate font-bold hover:underline" href={`/career/${encodeURIComponent(player.name)}`}>{player.name}</a>
+        {#if hasCareer(player.name)}
+          <a class="min-w-0 flex-1 truncate font-bold hover:underline" href={`/career/${encodeURIComponent(player.name)}`}>{player.name}</a>
+        {:else}
+          <span class="min-w-0 flex-1 truncate font-bold">{player.name}</span>
+        {/if}
         {#if player.placement === 1}<Crown class="shrink-0 text-gold" size={17} strokeWidth={1.75} aria-label="Winner" />{/if}
       </header>
       <div class="score-plaque tile-shadow">
